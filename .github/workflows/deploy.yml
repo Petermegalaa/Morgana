@@ -15,3 +15,4 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: 0d05fe281c7244816fae3908aff78f8f
           command: pages deploy site --project-name=morgana-yacht --branch=main --commit-dirty=true
+# deploys on every push that changes site/
