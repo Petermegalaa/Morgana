@@ -1,0 +1,17 @@
+name: Deploy website to Cloudflare Pages
+on:
+  push:
+    branches: [main]
+    paths: ['site/**', '.github/workflows/deploy.yml']
+  workflow_dispatch:
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Upload site/ to the morgana-yacht Pages project
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: 0d05fe281c7244816fae3908aff78f8f
+          command: pages deploy site --project-name=morgana-yacht --branch=main --commit-dirty=true
