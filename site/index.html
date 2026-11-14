@@ -361,6 +361,7 @@ footer a:hover{color:var(--sea)}
 .gmap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 .gnote{font-size:.8rem;color:var(--mute);margin-top:8px}
 @media (max-width:820px){.rev-grid{grid-template-columns:1fr}.rev-head h2{font-size:1.8rem}.gmap{height:320px}}
+[lang=en] .steps li::before,[dir=ltr] .steps li::before{content:counter(s,decimal)}
 </style>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebPage", "url": "https://www.morganayacht.com/", "name": "ايجار يخوت العين السخنة | Morgana Yacht – يخت للايجار في السخنة", "primaryImageOfPage": {"@type": "ImageObject", "url": "https://www.morganayacht.com/img/يخت-للايجار-في-العين-السخنة.webp", "caption": "يخت للايجار في العين السخنة"}, "image": ["https://www.morganayacht.com/img/yacht-rental-in-ain-sokhna.jpg", "https://www.morganayacht.com/img/يخت-للايجار-في-العين-السخنة.webp"]}</script>
 <style>
@@ -383,13 +384,14 @@ main img:not(.no-lb){cursor:zoom-in}
 .lang a:not(.on):hover{color:var(--sea)}
 .wa{display:inline-flex;align-items:center;gap:8px;flex-shrink:0}
 .wa .s{display:none}
-.burger{display:none;flex-shrink:0;width:42px;height:42px;border-radius:50%;border:1px solid color-mix(in srgb,var(--ink) 16%,transparent);background:var(--salt);color:var(--ink);cursor:pointer;padding:0;place-content:center;gap:4px}
+.burger{display:grid;flex-shrink:0;width:42px;height:42px;border-radius:50%;border:1px solid color-mix(in srgb,var(--ink) 16%,transparent);background:var(--salt);color:var(--ink);cursor:pointer;padding:0;place-content:center;gap:4px}
 .burger i{display:block;width:18px;height:2px;border-radius:2px;background:currentColor;transition:transform .25s,opacity .2s}
 .burger[aria-expanded="true"] i:nth-child(1){transform:translateY(6px) rotate(45deg)}
 .burger[aria-expanded="true"] i:nth-child(2){opacity:0}
 .burger[aria-expanded="true"] i:nth-child(3){transform:translateY(-6px) rotate(-45deg)}
 .mnav{position:absolute;top:calc(100% + 6px);inset-inline:max(12px,env(safe-area-inset-left,0px));background:var(--salt);color:var(--ink);border-radius:22px;box-shadow:0 18px 50px rgba(10,30,40,.22);padding:8px;max-height:calc(100vh - 100px);overflow:auto}
 .mnav[hidden]{display:none}
+@media (min-width:1101px){.mnav{inset-inline:auto max(12px,env(safe-area-inset-left,0px));inset-inline-start:auto;inset-inline-end:max(12px,env(safe-area-inset-right,0px));width:300px}}
 .nav .mnav ul{list-style:none;margin:0;padding:0;display:grid;gap:0;font-size:inherit}
 .mnav a{display:block;padding:15px 16px;border-radius:14px;text-decoration:none;font-size:1.08rem;font-weight:600;color:inherit}
 .mnav li+li a{border-top:1px solid color-mix(in srgb,var(--ink) 8%,transparent)}
