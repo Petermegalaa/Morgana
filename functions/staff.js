@@ -14,8 +14,8 @@ button,select,input,textarea{font:inherit}button{border:1px solid var(--line);ba
 .pri{background:var(--coral);color:#fff;border:0}.dark{background:var(--deep);color:#fff;border:0}
 main{max-width:1200px;margin:auto;padding:14px}
 .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.bar b{font-size:1.15rem;min-width:150px;text-align:center}
-.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}.dow{font-size:.8rem;color:var(--mute);text-align:center}
-.day{background:var(--salt);border-radius:12px;min-height:92px;padding:6px;border:1px solid var(--line)}.day.out{opacity:.4}.day.today{outline:2px solid var(--coral)}
+.cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.dow{font-size:.8rem;color:var(--mute);text-align:center}
+.day{min-width:0;overflow:hidden;background:var(--salt);border-radius:12px;min-height:92px;padding:6px;border:1px solid var(--line)}.day.out{opacity:.4}.day.today{outline:2px solid var(--coral)}
 .day .n{font-size:.8rem;color:var(--mute);display:flex;justify-content:space-between}.day .n button{padding:0 7px;border-radius:7px;font-size:.8rem}
 .chip{display:block;width:100%;text-align:start;margin-top:4px;padding:4px 6px;border-radius:8px;font-size:.78rem;border:0;color:#fff;background:var(--deep);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .chip.portofino2{background:#6a4c93}.chip.coquette{background:#b5651d}.chip.x{background:#9aa5a8;text-decoration:line-through}.chip.cont{opacity:.6}
@@ -28,7 +28,7 @@ label{display:grid;gap:4px;font-size:.85rem;color:var(--mute)}label input,label 
 .acts{display:flex;gap:8px;flex-wrap:wrap}.msg{white-space:pre-wrap;background:#eef7ef;border-radius:12px;padding:12px;font-size:.9rem;max-height:260px;overflow:auto}
 .err{color:var(--coral);font-size:.9rem}.hint{font-size:.8rem;color:var(--mute)}
 #login{max-width:420px;margin:60px auto;background:#fff;border-radius:18px;padding:22px;display:grid;gap:12px}
-@media(max-width:700px){.cal{gap:3px}.day{min-height:64px;padding:3px}.chip{font-size:.68rem;padding:2px 4px}.g3{grid-template-columns:1fr 1fr}}
+@media(max-width:700px){.dow{font-size:.62rem}.bar b{min-width:0;font-size:1rem}main{padding:8px}.g2{grid-template-columns:1fr}.cal{gap:3px}.day{min-height:64px;padding:3px}.chip{font-size:.68rem;padding:2px 4px}.g3{grid-template-columns:1fr 1fr}}
 </style></head><body>
 <div id="login" hidden><h2 style="margin:0">حجوزات Morgana</h2><label>مفتاح الدخول<input id="k" type="password" autocomplete="current-password"></label><button class="pri" id="kgo">دخول</button><p class="err" id="kerr"></p></div>
 <div id="app" hidden>
@@ -102,7 +102,7 @@ function render(){const y=cur.getFullYear(),m=cur.getMonth(),f=$('#fb').value;$(
  for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const s=ymd(d);
   const items=LIST.filter(b=>(!f||b.boat==f)&&b.start.slice(0,10)<=s&&b.end.slice(0,10)>=s&&!(b.end.slice(0,10)==s&&b.end.slice(11)<='08:00'&&b.start.slice(0,10)!=s));
   h+='<div class="day'+(d.getMonth()!=m?' out':'')+(s==today?' today':'')+'"><div class="n"><span>'+d.getDate()+'</span><button data-new="'+s+'" title="حجز جديد">+</button></div>'+
-   items.map(b=>'<button class="chip '+b.boat+(b.status=='cancelled'?' x':'')+(b.start.slice(0,10)!=s?' cont':'')+'" data-id="'+b.id+'">'+boat(b.boat).name+' · '+b.start.slice(11)+' '+esc(b.name)+'</button>').join('')+'</div>'}
+   items.map(b=>'<button class="chip '+b.boat+(b.status=='cancelled'?' x':'')+(b.start.slice(0,10)!=s?' cont':'')+'" data-id="'+b.id+'" title="'+boat(b.boat).name+' '+b.start.slice(11)+'">'+esc(b.name)+' · '+boat(b.boat).name+'</button>').join('')+'</div>'}
  $('#cal').innerHTML=h;
  const up=LIST.filter(b=>b.status!='cancelled'&&b.end.slice(0,10)>=today&&(!f||b.boat==f));
  $('#up').innerHTML=up.map(b=>{const rest=b.total-b.paid;return '<div class="row" data-id="'+b.id+'"><b>'+b.date.split('-').reverse().join('/')+'</b><span>'+boat(b.boat).name+'</span><span>'+tripLab(b,'ar')+'</span><span>'+esc(b.name)+'</span><span class="s">'+loc(b.phone)+'</span><span class="tag'+(rest?' due':'')+'">'+(rest?'باقي '+fmt(rest):'مدفوع بالكامل')+'</span><span class="s">'+esc(b.by||'')+'</span></div>'}).join('')||'<p class="hint">مفيش حجوزات جاية.</p>'}
