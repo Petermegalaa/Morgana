@@ -13,6 +13,7 @@ header h1{font-size:1.1rem;margin:0;flex:1}header button{background:rgba(255,255
 button,select,input,textarea{font:inherit}button{border:1px solid var(--line);background:var(--salt);border-radius:10px;padding:8px 12px;cursor:pointer}
 .pri{background:var(--coral);color:#fff;border:0}.dark{background:var(--deep);color:#fff;border:0}
 main{max-width:1200px;margin:auto;padding:14px}
+.tabs{display:flex;gap:8px;margin-bottom:12px;overflow-x:auto}.tabs button{flex:1;min-width:110px;padding:12px;font-weight:700;border-radius:14px;border:2px solid var(--line)}.tabs button.on{background:var(--deep);color:#fff;border-color:var(--deep)}.tabs button.on.portofino2{background:#6a4c93;border-color:#6a4c93}.tabs button.on.coquette{background:#b5651d;border-color:#b5651d}.tabs small{display:block;font-weight:400;font-size:.75rem;opacity:.8}
 .bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}.bar b{font-size:1.15rem;min-width:150px;text-align:center}
 .cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}.dow{font-size:.8rem;color:var(--mute);text-align:center}
 .day{min-width:0;overflow:hidden;background:var(--salt);border-radius:12px;min-height:92px;padding:6px;border:1px solid var(--line)}.day.out{opacity:.4}.day.today{outline:2px solid var(--coral)}
@@ -34,8 +35,9 @@ label{display:grid;gap:4px;font-size:.85rem;color:var(--mute)}label input,label 
 <div id="app" hidden>
 <header><h1>حجوزات Morgana</h1><span id="me"></span><button id="set" hidden>الإعدادات</button><button id="out">خروج</button></header>
 <main>
+<div class="tabs" id="tabs"></div>
 <div class="bar"><button id="prev">‹</button><b id="mon"></b><button id="next">›</button><button id="tod">النهارده</button>
-<select id="fb"><option value="">كل المراكب</option></select><span style="flex:1"></span><button class="pri" id="add">+ حجز جديد</button></div>
+<span style="flex:1"></span><button class="pri" id="add">+ حجز جديد</button></div>
 <div class="cal" id="cal"></div>
 <h3 style="margin:18px 0 0">الحجوزات الجاية</h3><div class="list" id="up"></div>
 </main></div>
@@ -76,8 +78,8 @@ label{display:grid;gap:4px;font-size:.85rem;color:var(--mute)}label input,label 
 const $=s=>document.querySelector(s),AR_D=['الاحد','الاثنين','الثلاثاء','الاربعاء','الخميس','الجمعه','السبت'],EN_D=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 const AR_M=['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
 const PRESET={day:['06:00','17:00',0],night5:['17:00','06:00',1],night4:['16:00','06:00',1],night6:['18:00','06:00',1],h24m:['06:00','06:00',1],h24e:['17:00','17:00',1],sunset:['16:00','18:00',0]};
-let KEY='',ME=null,CFG={boats:[],marinas:{},captains:[]},LIST=[],cur=new Date(),editing=null,viewing=null;
-try{KEY=localStorage.getItem('mk')||''}catch(e){}
+let BOAT='morgana',KEY='',ME=null,CFG={boats:[],marinas:{},captains:[]},LIST=[],cur=new Date(),editing=null,viewing=null;
+try{KEY=localStorage.getItem('mk')||'';BOAT=localStorage.getItem('mb')||BOAT}catch(e){}
 const fmt=n=>Number(n||0).toLocaleString('en-US');
 const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const addD=(s,n)=>{const d=new Date(s+'T12:00');d.setDate(d.getDate()+n);return ymd(d)};
@@ -89,7 +91,7 @@ $('#kgo').onclick=async()=>{KEY=$('#k').value.trim();$('#kerr').textContent='';t
 $('#out').onclick=logout;
 async function load(){const a=new Date(cur.getFullYear(),cur.getMonth(),1),from=addD(ymd(a),-7),to=addD(ymd(new Date(cur.getFullYear(),cur.getMonth()+1,0)),45);
  const j=await api('/api/bookings?from='+from+'&to='+to);ME=j.me;CFG=j.cfg;LIST=j.list;$('#login').hidden=true;$('#app').hidden=false;$('#me').textContent=ME.name;$('#set').hidden=!ME.admin;
- const fb=$('#fb'),v=fb.value;fb.innerHTML='<option value="">كل المراكب</option>'+CFG.boats.map(b=>'<option value="'+b.id+'">'+b.name+'</option>').join('');fb.value=v;render()}
+ if(!CFG.boats.some(b=>b.id==BOAT))BOAT=CFG.boats[0].id;render()}
 function season(d){const m=+d.slice(5,7),dd=+d.slice(8,10);return (m>=4&&m<=9)||(m==10&&dd<=15)?'summer':'winter'}
 function suggest(b){ // returns [price, note] — Morgana price list; others are typed by hand
  if(b.boat!='morgana')return [0,'السعر يتكتب بالإيد للمركب ده'];
@@ -97,19 +99,19 @@ function suggest(b){ // returns [price, note] — Morgana price list; others are
  if(s=='winter'){if(t=='day')return[(fri?5500:sat?4500:3500)+fish,'سعر الشتاء'];if(t=='h24m'||t=='h24e')return[(fri?9000:sat?7000:6000)+fish,'سعر 24 ساعة شتاء'];}
  else{if(t=='day')return[(fri?12000:sat?8500:(dw==0||dw==4)?7000:6000)+fish,'سعر الصيف'];if(t=='sunset')return[(fri||sat)?2500:2000,'غروب صيف'];}
  return [0,'السعر يتكتب بالإيد للرحلة دي']}
-function render(){const y=cur.getFullYear(),m=cur.getMonth(),f=$('#fb').value;$('#mon').textContent=AR_M[m]+' '+y;
+function render(){const y=cur.getFullYear(),m=cur.getMonth(),f=BOAT;$('#tabs').innerHTML=CFG.boats.map(b=>'<button class="'+b.id+(b.id==f?' on':'')+'" data-boat="'+b.id+'">'+b.name+'<small>'+b.cap+' فرد</small></button>').join('');$('#mon').textContent=AR_M[m]+' '+y;
  const first=new Date(y,m,1),start=new Date(first);start.setDate(1-first.getDay());const today=ymd(new Date());let h=AR_D.map(d=>'<div class="dow">'+d+'</div>').join('');
  for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const s=ymd(d);
-  const items=LIST.filter(b=>(!f||b.boat==f)&&b.start.slice(0,10)<=s&&b.end.slice(0,10)>=s&&!(b.end.slice(0,10)==s&&b.end.slice(11)<='08:00'&&b.start.slice(0,10)!=s));
+  const items=LIST.filter(b=>b.boat==f&&b.start.slice(0,10)<=s&&b.end.slice(0,10)>=s&&!(b.end.slice(0,10)==s&&b.end.slice(11)<='08:00'&&b.start.slice(0,10)!=s));
   h+='<div class="day'+(d.getMonth()!=m?' out':'')+(s==today?' today':'')+'"><div class="n"><span>'+d.getDate()+'</span><button data-new="'+s+'" title="حجز جديد">+</button></div>'+
-   items.map(b=>'<button class="chip '+b.boat+(b.status=='cancelled'?' x':'')+(b.start.slice(0,10)!=s?' cont':'')+'" data-id="'+b.id+'" title="'+boat(b.boat).name+' '+b.start.slice(11)+'">'+esc(b.name)+' · '+boat(b.boat).name+'</button>').join('')+'</div>'}
+   items.map(b=>'<button class="chip '+b.boat+(b.status=='cancelled'?' x':'')+(b.start.slice(0,10)!=s?' cont':'')+'" data-id="'+b.id+'" title="'+boat(b.boat).name+' '+b.start.slice(11)+'">'+esc(b.name)+' · '+(tripLab(b,'ar')||'يوم')+'</button>').join('')+'</div>'}
  $('#cal').innerHTML=h;
- const up=LIST.filter(b=>b.status!='cancelled'&&b.end.slice(0,10)>=today&&(!f||b.boat==f));
+ const up=LIST.filter(b=>b.status!='cancelled'&&b.end.slice(0,10)>=today&&b.boat==f);
  $('#up').innerHTML=up.map(b=>{const rest=b.total-b.paid;return '<div class="row" data-id="'+b.id+'"><b>'+b.date.split('-').reverse().join('/')+'</b><span>'+boat(b.boat).name+'</span><span>'+tripLab(b,'ar')+'</span><span>'+esc(b.name)+'</span><span class="s">'+loc(b.phone)+'</span><span class="tag'+(rest?' due':'')+'">'+(rest?'باقي '+fmt(rest):'مدفوع بالكامل')+'</span><span class="s">'+esc(b.by||'')+'</span></div>'}).join('')||'<p class="hint">مفيش حجوزات جاية.</p>'}
 const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-document.addEventListener('click',e=>{const n=e.target.closest('[data-new]');if(n)return openEdit(null,n.dataset.new);const c=e.target.closest('[data-id]');if(c)openView(c.dataset.id)});
+document.addEventListener('click',e=>{const t=e.target.closest('[data-boat]');if(t){BOAT=t.dataset.boat;try{localStorage.setItem('mb',BOAT)}catch(x){}return render()}const n=e.target.closest('[data-new]');if(n)return openEdit(null,n.dataset.new);const c=e.target.closest('[data-id]');if(c)openView(c.dataset.id)});
 $('#prev').onclick=()=>{cur=new Date(cur.getFullYear(),cur.getMonth()-1,1);load()};$('#next').onclick=()=>{cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);load()};
-$('#tod').onclick=()=>{cur=new Date();load()};$('#fb').onchange=render;$('#add').onclick=()=>openEdit(null,ymd(new Date()));
+$('#tod').onclick=()=>{cur=new Date();load()};$('#add').onclick=()=>openEdit(null,ymd(new Date()));
 // ---- form
 const F=$('#f');
 function fillSelects(){$('#fboat').innerHTML=CFG.boats.map(b=>'<option value="'+b.id+'">'+b.name+' ('+b.cap+' فرد)</option>').join('');
@@ -123,7 +125,7 @@ function reprice(){const b=formData();const[p,n]=suggest(b);$('#fhint').textCont
 $('#ftotal').addEventListener('input',()=>{autoPrice=false;$('#fpaid').value=Math.round(($('#ftotal').value||0)/2)});
 function openEdit(b,date){editing=b;fillSelects();F.reset();$('#ferr').textContent='';$('#ft').textContent=b?'تعديل الحجز':'حجز جديد';autoPrice=!b;
  if(b){for(const k of['boat','trip','kind','guests','name','captain','total','paid','lang','source','note'])if(F[k])F[k].value=b[k]??'';F.phone.value=loc(b.phone);F.phone2.value=loc(b.phone2);$('#fhol').checked=!!b.holiday;F.date.value=b.date;$('#ft1').value=b.start.slice(11);$('#ft2').value=b.end.slice(11);reprice()}
- else{F.date.value=date;F.trip.value='day';applyPreset()}
+ else{F.boat.value=BOAT;F.date.value=date;F.trip.value='day';applyPreset()}
  dView.close();dEdit.showModal()}
 F.addEventListener('submit',async e=>{if(e.submitter&&e.submitter.value=='cancel')return;e.preventDefault();await save(false)});
 async function save(force){const b=formData();$('#ferr').textContent='';$('#fsave').disabled=true;
