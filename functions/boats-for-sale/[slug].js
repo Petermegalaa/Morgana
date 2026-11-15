@@ -11,8 +11,9 @@ export async function onRequestGet({request, env, params}) {
   }
   const cur = b.currency === 'USD' ? 'USD' : 'جنيه';
   const url = SITE + listUrl(b);
-  const title = `${b.title} للبيع – ${fmt(b.price)} ${cur} | Morgana Yacht`;
-  const descr = `${b.title} للبيع في ${b.location}${b.length ? '، طول ' + b.length + ' متر' : ''}${b.year ? '، موديل ' + b.year : ''}. السعر ${fmt(b.price)} ${cur}. ${b.desc.slice(0, 90)}`.replace(/\s+/g, ' ');
+  const sale = /للبيع|for sale/i.test(b.title) ? '' : ' للبيع';
+  const title = `${b.title}${sale} – ${fmt(b.price)} ${cur} | Morgana Yacht`;
+  const descr = `${b.title}${sale} في ${b.location}${b.length ? '، طول ' + b.length + ' متر' : ''}${b.year ? '، موديل ' + b.year : ''}. السعر ${fmt(b.price)} ${cur}. ${b.desc.slice(0, 90)}`.replace(/\s+/g, ' ');
   const imgs = Array.from({length: b.imgs}, (_, n) => imgUrl(b, n));
   const wa = `https://wa.me/${b.phone}?text=${encodeURIComponent('مرحبًا، شفت إعلان ' + b.title + ' على موقع Morgana Yacht: ' + url)}`;
   const schema = {"@context": "https://schema.org", "@type": "Product", name: b.title, description: b.desc.slice(0, 500), image: imgs.map(i => SITE + i), url,
