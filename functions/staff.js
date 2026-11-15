@@ -56,7 +56,7 @@ label{display:grid;gap:4px;font-size:.85rem;color:var(--mute)}label input,label 
 <label style="align-content:end"><span><input type="checkbox" name="holiday" id="fhol"> إجازة رسمية / عيد</span></label></div>
 <div class="g2"><label>اسم العميل<input name="name" required></label><label>موبايل العميل<input name="phone" inputmode="tel" required placeholder="01xxxxxxxxx"></label></div>
 <div class="g2"><label>موبايل تاني (اختياري)<input name="phone2" inputmode="tel"></label><label>الريس<select name="captain" id="fcap"><option value="">—</option></select></label></div>
-<div class="g3"><label>السعر الإجمالي<input name="total" id="ftotal" inputmode="numeric" required></label><label>العربون المدفوع<input name="paid" id="fpaid" inputmode="numeric"></label><label>لغة الرسالة<select name="lang"><option value="ar">عربي</option><option value="en">English</option></select></label></div>
+<div class="g3"><label>السعر الإجمالي<input name="total" id="ftotal" inputmode="numeric" required></label><label>العربون المدفوع<input name="paid" id="fpaid" inputmode="numeric"></label><label>لغة الرسالة<select name="lang"><option value="both">عربي + English</option><option value="ar">عربي</option><option value="en">English</option></select></label></div>
 <p class="hint" id="fhint"></p>
 <div class="g2"><label>الحجز جه منين<select name="source"><option>واتساب</option><option>الموقع</option><option>فيسبوك</option><option>انستجرام</option><option>تليفون</option><option>تاني</option></select></label><label>ملاحظات<input name="note"></label></div>
 <p class="err" id="ferr"></p>
@@ -141,7 +141,7 @@ function hl(t,lang){let h=+t.slice(0,2),mi=t.slice(3);const mm=mi=='00'?'':':'+m
 function tripLab(b,lang){const t=b.trip,en=lang=='en';const a=[];
  if(t=='h24m'||t=='h24e')a.push(en?'24 hours':'24 ساعه');else if(t.startsWith('night'))a.push(en?'Overnight':'مسائي');else if(t=='sunset')a.push(en?'Sunset':'غروب');
  if(b.kind=='fishing')a.push(en?'Fishing':'صيد');return a.join(' ')}
-function conf(b){const d=new Date(b.date+'T12:00'),dd=b.date.split('-').reverse().map(Number).join('/'),rest=b.total-b.paid,bt=boat(b.boat),next=b.end.slice(0,10)!=b.date;
+function conf(b){if(b.lang=='both')return conf({...b,lang:'ar'});const d=new Date(b.date+'T12:00'),dd=b.date.split('-').reverse().map(Number).join('/'),rest=b.total-b.paid,bt=boat(b.boat),next=b.end.slice(0,10)!=b.date;
  const ph=[loc(b.phone),loc(b.phone2)].filter(Boolean).join('\n'),lab=tripLab(b,b.lang);
  if(b.lang=='en')return 'Reservation confirmation\n\nThe reservation is confirmed\n\nDate: '+EN_D[d.getDay()]+'  '+dd+'\n\nby paying '+fmt(b.paid)+' out of '+fmt(b.total)+' and the remaining amount of '+fmt(rest)+' to be paid upon arrival\n\nFrom '+hl(b.start.slice(11),'en')+' to '+hl(b.end.slice(11),'en')+(next?' (next day)':'')+'\n\n'+(lab?lab+'\n\n':'')+bt.name+' '+(bt.cap||'')+'\n\nName: '+b.name+'\n\nMobile: '+ph;
  return 'رساله تاكيد الحجز\n\nتم تأكيد الحجز يوم '+AR_D[d.getDay()]+'  '+dd+' بدفع مبلغ '+fmt(b.paid)+' جم من اصل '+fmt(b.total)+' جم ومتبقي '+fmt(rest)+' يتم دفعها عند الوصول\n\nمن '+hl(b.start.slice(11),'ar')+' الي '+hl(b.end.slice(11),'ar')+(next?' (تاني يوم)':'')+'\n\n'+(lab?lab+'\n\n':'')+bt.name+'\n\n'+b.name+'\n\n'+ph}
@@ -151,7 +151,7 @@ function full(b){const bt=boat(b.boat),m=CFG.marinas[bt.marina]||{},cap=CFG.capt
  s+=en?'\n\nImportant: please bring original national IDs or passports, and birth certificates for children.\nAlcohol is strictly not allowed on board.\n\nHave a great day with us!':'\n\nاهم حاجه هاتوا معاكوا البطايق او الباسبورات او شهادات الميلاد للاطفال (الاصل)\n\nانشاء الله تقضوا يوم جميل وتتبسطوا';return s}
 const wa=(p,t)=>'https://wa.me/'+(p||'')+'?text='+encodeURIComponent(t);
 function invUrl(b){return location.origin+'/invoice/'+b.id+'/'+b.tok}
-function custMsg(b){const u=invUrl(b),dd=b.date.split('-').reverse().map(Number).join('/');
+function custMsg(b){if(b.lang=='both'){const u=invUrl(b),dd=b.date.split('-').reverse().map(Number).join('/');return 'أهلا '+b.name+'\nتم تأكيد حجزك مع Morgana يوم '+dd+' ✅\nYour Morgana booking on '+dd+' is confirmed ✅\n\nفاتورة الحجز / Your invoice:\n'+u+'\n\nاهم حاجه هاتوا معاكوا البطايق او الباسبورات او شهادات الميلاد للاطفال (الاصل)\nPlease bring original IDs / passports, and birth certificates for children.\n\nانشاء الله تقضوا يوم جميل وتتبسطوا 🌊'}const u=invUrl(b),dd=b.date.split('-').reverse().map(Number).join('/');
  if(b.lang=='en')return 'Hello '+b.name+',\nYour Morgana booking on '+dd+' is confirmed ✅\n\nYour invoice:\n'+u+'\n\nPlease bring original IDs / passports, and birth certificates for children.\nSee you soon!';
  return 'أهلا '+b.name+'\nتم تأكيد حجزك مع Morgana يوم '+dd+' ✅\n\nفاتورة الحجز:\n'+u+'\n\nاهم حاجه هاتوا معاكوا البطايق او الباسبورات او شهادات الميلاد للاطفال (الاصل)\n\nانشاء الله تقضوا يوم جميل وتتبسطوا'}
 async function openView(id){let b=LIST.find(x=>x.id==id);if(!b)return;

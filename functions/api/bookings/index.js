@@ -14,7 +14,7 @@ export async function shape(env, body, prev = {}) {
     start: clean(body.start, 16), end: clean(body.end, 16),
     name: clean(body.name, 60), phone: normPhone(body.phone) || '', phone2: normPhone(body.phone2) || '',
     guests: num(body.guests), total: num(body.total), paid: num(body.paid),
-    captain: clean(body.captain, 60), lang: body.lang === 'en' ? 'en' : 'ar',
+    captain: clean(body.captain, 60), lang: ['en', 'ar'].includes(body.lang) ? body.lang : 'both',
     holiday: !!body.holiday, note: clean(body.note, 400), source: clean(body.source, 30),
   };
   const bad = [];
