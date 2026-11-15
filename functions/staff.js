@@ -22,7 +22,8 @@ main{max-width:1200px;margin:auto;padding:14px}
 .chip.portofino2{background:#6a4c93}.chip.coquette{background:#b5651d}.chip.x{background:#9aa5a8;text-decoration:line-through}.chip.cont{opacity:.6}
 .list{display:grid;gap:8px;margin-top:16px}.row{background:var(--salt);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;cursor:pointer}
 .row .s{color:var(--mute);font-size:.85rem}.tag{font-size:.75rem;padding:2px 8px;border-radius:20px;background:#e8f1f3;color:var(--deep)}.tag.due{background:#fdf0e5;color:var(--warn)}
-dialog{border:0;border-radius:18px;padding:0;width:min(640px,96vw);max-height:92vh}dialog::backdrop{background:rgba(0,0,0,.45)}
+.ifw{height:58vh;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#e9ece9}.ifw iframe{width:100%;height:100%;border:0}
+dialog{border:0;border-radius:18px;padding:0;width:min(760px,96vw);max-height:92vh}dialog::backdrop{background:rgba(0,0,0,.45)}
 .dlg{padding:18px;display:grid;gap:10px}.dlg h2{margin:0;font-size:1.15rem}
 label{display:grid;gap:4px;font-size:.85rem;color:var(--mute)}label input,label select,label textarea{color:var(--ink);padding:9px 10px;border:1px solid var(--line);border-radius:10px;background:#fff}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
@@ -63,8 +64,8 @@ label{display:grid;gap:4px;font-size:.85rem;color:var(--mute)}label input,label 
 </form></dialog>
 
 <dialog id="dView"><div class="dlg"><h2 id="vt"></h2><div id="vinfo" class="hint"></div>
-<div class="msg" id="vmsg"></div>
-<div class="acts"><a class="pri" id="wC" target="_blank"><button class="pri" type="button">1. ابعت للعميل</button></a><a id="wG" target="_blank"><button class="dark" type="button">2. ابعت لجروب ح مرجانه</button></a><a id="wK" target="_blank"><button type="button">ابعت للريس</button></a><button id="cp" type="button">نسخ</button></div>
+<div class="ifw"><iframe id="vinv" title="الفاتورة"></iframe></div>
+<div class="acts"><a id="wC" target="_blank"><button class="pri" type="button">1. ابعت الفاتورة للعميل</button></a><a id="wG" target="_blank"><button class="dark" type="button">2. ابعت لجروب ح مرجانه</button></a><a id="wK" target="_blank"><button type="button">ابعت للريس</button></a><a id="vopen" target="_blank"><button type="button">افتح الفاتورة (PDF / صورة)</button></a><button id="cp" type="button">نسخ اللينك</button></div><pre class="msg" id="vmsg" hidden></pre>
 <div class="acts"><button id="ved" type="button">تعديل</button><button id="vcx" type="button">إلغاء الحجز</button><button id="vdel" type="button" hidden>مسح نهائي</button><span style="flex:1"></span><button type="button" onclick="dView.close()">قفل</button></div>
 <p class="err" id="verr"></p></div></dialog>
 
@@ -149,13 +150,20 @@ function full(b){const bt=boat(b.boat),m=CFG.marinas[bt.marina]||{},cap=CFG.capt
  if(cap)s+=en?'\n\nYour captain: '+cap.name+'\n'+loc(cap.phone):'\n\nده رقم الريس '+cap.name+' اللي هيكون معاكم\n'+loc(cap.phone);
  s+=en?'\n\nImportant: please bring original national IDs or passports, and birth certificates for children.\nAlcohol is strictly not allowed on board.\n\nHave a great day with us!':'\n\nاهم حاجه هاتوا معاكوا البطايق او الباسبورات او شهادات الميلاد للاطفال (الاصل)\n\nانشاء الله تقضوا يوم جميل وتتبسطوا';return s}
 const wa=(p,t)=>'https://wa.me/'+(p||'')+'?text='+encodeURIComponent(t);
-function openView(id){const b=LIST.find(x=>x.id==id);if(!b)return;viewing=b;const bt=boat(b.boat),cap=CFG.captains.find(c=>c.name==b.captain);
+function invUrl(b){return location.origin+'/invoice/'+b.id+'/'+b.tok}
+function custMsg(b){const u=invUrl(b),dd=b.date.split('-').reverse().map(Number).join('/');
+ if(b.lang=='en')return 'Hello '+b.name+',\nYour Morgana booking on '+dd+' is confirmed ✅\n\nYour invoice:\n'+u+'\n\nPlease bring original IDs / passports, and birth certificates for children.\nSee you soon!';
+ return 'أهلا '+b.name+'\nتم تأكيد حجزك مع Morgana يوم '+dd+' ✅\n\nفاتورة الحجز:\n'+u+'\n\nاهم حاجه هاتوا معاكوا البطايق او الباسبورات او شهادات الميلاد للاطفال (الاصل)\n\nانشاء الله تقضوا يوم جميل وتتبسطوا'}
+async function openView(id){let b=LIST.find(x=>x.id==id);if(!b)return;
+ if(!b.tok){const j=await api('/api/bookings/'+b.id,{action:'tok'});if(j.booking){Object.assign(b,j.booking)}}
+ viewing=b;const bt=boat(b.boat),cap=CFG.captains.find(c=>c.name==b.captain),u=invUrl(b);
  $('#vt').textContent=bt.name+' · '+b.date.split('-').reverse().join('/')+(b.status=='cancelled'?' (ملغي)':'');
  $('#vinfo').textContent='سجّله: '+(b.by||'')+(b.source?' · من '+b.source:'')+(b.note?' · '+b.note:'');
- const t=full(b);$('#vmsg').textContent=t;$('#wC').href=wa(b.phone,t);$('#wG').href=wa('',conf(b));
+ $('#vinv').src=u;$('#vopen').href=u;$('#vmsg').textContent=u;
+ $('#wC').href=wa(b.phone,custMsg(b));$('#wG').href=wa('',conf(b)+'\n\n'+u);
  $('#wK').hidden=!cap||!cap.phone;if(cap)$('#wK').href=wa(cap.phone,conf(b));
  $('#vcx').textContent=b.status=='cancelled'?'رجّع الحجز':'إلغاء الحجز';$('#vdel').hidden=!ME.admin;$('#verr').textContent='';dView.showModal()}
-$('#cp').onclick=()=>navigator.clipboard.writeText($('#vmsg').textContent).then(()=>{$('#cp').textContent='اتنسخ ✓';setTimeout(()=>$('#cp').textContent='نسخ',1500)});
+$('#cp').onclick=()=>navigator.clipboard.writeText(invUrl(viewing)).then(()=>{$('#cp').textContent='اتنسخ ✓';setTimeout(()=>$('#cp').textContent='نسخ اللينك',1500)});
 $('#ved').onclick=()=>openEdit(viewing);
 $('#vcx').onclick=async()=>{const a=viewing.status=='cancelled'?'restore':'cancel';if(a=='cancel'&&!confirm('تلغي الحجز ده؟'))return;const j=await api('/api/bookings/'+viewing.id,{action:a});if(j.error){$('#verr').textContent=j.error=='clash'?'المركب اتحجز في نفس الوقت':j.error;return}dView.close();load()};
 $('#vdel').onclick=async()=>{if(!confirm('مسح نهائي للحجز؟ مش هيرجع تاني.'))return;await api('/api/bookings/'+viewing.id,{action:'delete'});dView.close();load()};

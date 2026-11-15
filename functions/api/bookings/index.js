@@ -42,7 +42,7 @@ export async function onRequestGet({request, env}) {
 export async function onRequestPost({request, env}) {
   const me = await who(env, request); if (!me) return deny();
   const body = await request.json().catch(() => ({}));
-  const {b, bad} = await shape(env, body, {id: rid(10), created: Date.now(), by: me.name, status: 'confirmed'});
+  const {b, bad} = await shape(env, body, {id: rid(10), tok: rid(14), created: Date.now(), by: me.name, status: 'confirmed'});
   if (bad.length) return json({error: 'invalid', fields: bad}, 400);
   const c = await clash(env, b);
   if (c && !body.force) return json({error: 'clash', with: {name: c.name, start: c.start, end: c.end}}, 409);

@@ -1,4 +1,4 @@
-import {json} from '../../_lib.js';
+import {json, rid} from '../../_lib.js';
 import {who, deny, clash} from '../../_bk.js';
 import {shape} from './index.js';
 
@@ -14,6 +14,12 @@ export async function onRequestPost({request, env, params}) {
   if (body.action === 'cancel' || body.action === 'restore') {
     const b = {...old, status: body.action === 'cancel' ? 'cancelled' : 'confirmed', log};
     if (b.status === 'confirmed') { const c = await clash(env, b); if (c && !body.force) return json({error: 'clash', with: {name: c.name, start: c.start, end: c.end}}, 409); }
+    await env.BOATS.put(`bk:${date}:${b.id}`, JSON.stringify(b));
+    return json({ok: true, booking: b});
+  }
+  if (body.action === 'tok') {
+    if (old.tok) return json({ok: true, booking: old});
+    const b = {...old, tok: rid(14)};
     await env.BOATS.put(`bk:${date}:${b.id}`, JSON.stringify(b));
     return json({ok: true, booking: b});
   }
