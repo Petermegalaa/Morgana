@@ -96,7 +96,9 @@ async function load(){const a=new Date(cur.getFullYear(),cur.getMonth(),1),from=
  if(!CFG.boats.some(b=>b.id==BOAT))BOAT=CFG.boats[0].id;render()}
 function season(d){const m=+d.slice(5,7),dd=+d.slice(8,10);return (m>=4&&m<=9)||(m==10&&dd<=15)?'summer':'winter'}
 function suggest(b){ // returns [price, note] — Morgana price list; others are typed by hand
- if(b.boat!='morgana')return [0,'السعر يتكتب بالإيد للمركب ده'];
+ if(b.boat!='morgana'){const BIG={portofino2:[8000,11000,14000],coquette:[10000,12000,15000]}[b.boat];if(!BIG)return [0,'السعر يتكتب بالإيد للمركب ده'];
+  const dw=new Date(b.date+'T12:00').getDay(),i=(dw==5||b.holiday)?2:dw==6?1:0;
+  if(season(b.date)=='winter'&&b.trip=='day')return [BIG[i],'سعر الشتاء (6 – 4)'];if(season(b.date)=='summer'&&b.trip=='sunset')return [4000,'رحلة الساعتين صيف'];return [0,'السعر يتكتب بالإيد للرحلة دي']}
  const dw=new Date(b.date+'T12:00').getDay(),fri=dw==5||b.holiday,sat=dw==6,fish=b.kind=='fishing'?2000:0,s=season(b.date),t=b.trip;
  if(s=='winter'){if(t=='day')return[(fri?5500:sat?4500:3500)+fish,'سعر الشتاء'];if(t=='h24m'||t=='h24e')return[(fri?9000:sat?7000:6000)+fish,'سعر 24 ساعة شتاء'];}
  else{if(t=='day')return[(fri?12000:sat?8500:(dw==0||dw==4)?7000:6000)+fish,'سعر الصيف'];if(t=='sunset')return[(fri||sat)?2500:2000,'غروب صيف'];}
@@ -118,12 +120,12 @@ $('#tod').onclick=()=>{cur=new Date();load()};$('#add').onclick=()=>openEdit(nul
 const F=$('#f');
 function fillSelects(){$('#fboat').innerHTML=CFG.boats.map(b=>'<option value="'+b.id+'">'+b.name+' ('+b.cap+' فرد)</option>').join('');
  $('#fcap').innerHTML='<option value="">—</option>'+CFG.captains.map(c=>'<option>'+esc(c.name)+'</option>').join('')}
-function applyPreset(){const p=PRESET[$('#ftrip').value];if(p){$('#ft1').value=p[0];$('#ft2').value=p[1]}reprice()}
+function applyPreset(){const p=PRESET[$('#ftrip').value];if(p){$('#ft1').value=p[0];$('#ft2').value=($('#ftrip').value=='day'&&($('#fboat').value!='morgana'||season($('#fdate').value||'2026-01-01')=='summer'))?'16:00':p[1]}reprice()}
 let autoPrice=true;
 function formData(){const fd=Object.fromEntries(new FormData(F));const p=PRESET[fd.trip];const d2=p?addD(fd.date,p[2]):(fd.t2<=fd.t1?addD(fd.date,1):fd.date);
  return {...fd,holiday:$('#fhol').checked,start:fd.date+'T'+fd.t1,end:d2+'T'+fd.t2}}
 function reprice(){const b=formData();const[p,n]=suggest(b);$('#fhint').textContent=n+(p?' · المقترح '+fmt(p)+' · العربون نص المبلغ':'');if(p&&autoPrice){$('#ftotal').value=p;$('#fpaid').value=p/2}}
-['#fboat','#fdate','#fkind','#fhol'].forEach(s=>$(s).addEventListener('change',reprice));$('#ftrip').addEventListener('change',applyPreset);
+['#fkind','#fhol'].forEach(s=>$(s).addEventListener('change',reprice));['#fboat','#fdate'].forEach(s=>$(s).addEventListener('change',applyPreset));$('#ftrip').addEventListener('change',applyPreset);
 $('#ftotal').addEventListener('input',()=>{autoPrice=false;$('#fpaid').value=Math.round(($('#ftotal').value||0)/2)});
 function openEdit(b,date){editing=b;fillSelects();F.reset();$('#ferr').textContent='';$('#ft').textContent=b?'تعديل الحجز':'حجز جديد';autoPrice=!b;
  if(b){for(const k of['boat','trip','kind','guests','name','captain','total','paid','lang','source','note'])if(F[k])F[k].value=b[k]??'';F.phone.value=loc(b.phone);F.phone2.value=loc(b.phone2);$('#fhol').checked=!!b.holiday;F.date.value=b.date;$('#ft1').value=b.start.slice(11);$('#ft2').value=b.end.slice(11);reprice()}

@@ -3,6 +3,7 @@
 import {json, rid, normPhone, sha256} from '../../_lib.js';
 import {clash, addDays} from '../../_bk.js';
 import {quote, ITEM_LABEL} from '../../_price.js';
+import {getHolidays} from '../../_holidays.js';
 
 const clean = (s, n) => String(s ?? '').replace(/[<>]/g, '').trim().slice(0, n);
 
@@ -21,17 +22,19 @@ export async function onRequestPost({request, env}) {
   const name = clean(body.name, 60), phone = normPhone(body.phone);
   if (name.length < 2) bad.push('name');
   if (!phone) bad.push('phone');
+  const boat = ['morgana', 'portofino2', 'coquette'].includes(body.boat) ? body.boat : 'morgana';
+  const holiday = (await getHolidays(env)).includes(date);
+  const q = quote({boat, trip: body.trip, date, holiday, fishing: !!body.fishing, h24: !!body.h24, rods: body.rods, bait: body.bait});
+  if (!q.ok) bad.push(q.err === 'trip' ? 'trip' : 'date');
   const guests = Math.round(Number(body.guests) || 0);
-  if (guests < 1 || guests > 10) bad.push('guests');
+  if (guests < 1 || (q.cap && guests > q.cap)) bad.push('guests');
   if (bad.length) return json({error: 'invalid', fields: bad}, 400);
 
-  const q = quote({date, fishing: !!body.fishing, h24: !!body.h24, rods: body.rods, bait: body.bait});
-  const end = body.h24 ? addDays(date, 1) + 'T06:00' : date + 'T17:00';
   const b = {
     id: rid(10), tok: rid(14), created: Date.now(), by: 'الموقع', source: 'الموقع', status: 'pending',
-    boat: 'morgana', trip: body.h24 ? 'h24m' : 'day', kind: body.fishing ? 'fishing' : 'outing',
-    start: date + 'T06:00', end, date, name, phone, phone2: normPhone(body.phone2) || '', guests,
-    total: q.total, paid: 0, deposit: q.deposit, captain: '', lang: body.lang === 'en' ? 'en' : 'both', holiday: false,
+    boat, trip: q.h24 ? 'h24m' : body.trip === 'sunset' ? 'sunset' : 'day', kind: q.fishing ? 'fishing' : 'outing',
+    start: q.start, end: q.end, date, name, phone, phone2: normPhone(body.phone2) || '', guests,
+    total: q.total, paid: 0, deposit: q.deposit, captain: '', lang: body.lang === 'en' ? 'en' : 'both', holiday,
     note: clean(body.note, 300),
     items: q.items.map(i => ({...i, ar: ITEM_LABEL[i.k].ar, en: ITEM_LABEL[i.k].en})),
   };
