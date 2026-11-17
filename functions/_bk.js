@@ -58,5 +58,8 @@ export const addDays = (d, n) => {
 // Another active booking of the same boat whose time overlaps [start, end)?
 export async function clash(env, b) {
   const near = await listBookings(env, addDays(b.date, -2), addDays(b.date, 2));
-  return near.find(x => x.id !== b.id && x.status !== 'cancelled' && x.boat === b.boat && x.start < b.end && b.start < x.end) || null;
+  return near.find(x => x.id !== b.id && holds(x) && x.boat === b.boat && x.start < b.end && b.start < x.end) || null;
 }
+
+// Does this booking block the boat? Unpaid website requests stop holding the slot after 24 h with no receipt.
+export const holds = x => x.status === 'confirmed' || (x.status === 'pending' && (x.receipt || Date.now() - x.created < 86400000));

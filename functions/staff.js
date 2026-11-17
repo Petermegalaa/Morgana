@@ -19,7 +19,7 @@ main{max-width:1200px;margin:auto;padding:14px}
 .day{min-width:0;overflow:hidden;background:var(--salt);border-radius:12px;min-height:92px;padding:6px;border:1px solid var(--line)}.day.out{opacity:.4}.day.today{outline:2px solid var(--coral)}
 .day .n{font-size:.8rem;color:var(--mute);display:flex;justify-content:space-between}.day .n button{padding:0 7px;border-radius:7px;font-size:.8rem}
 .chip{display:block;width:100%;text-align:start;margin-top:4px;padding:4px 6px;border-radius:8px;font-size:.78rem;border:0;color:#fff;background:var(--deep);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.chip.portofino2{background:#6a4c93}.chip.coquette{background:#b5651d}.chip.x{background:#9aa5a8;text-decoration:line-through}.chip.cont{opacity:.6}
+.chip.portofino2{background:#6a4c93}.chip.coquette{background:#b5651d}.chip.x{background:#9aa5a8;text-decoration:line-through}.chip.p{background:repeating-linear-gradient(45deg,#d9a21f,#d9a21f 6px,#c99212 6px,#c99212 12px)}.pend{background:#fff6e0;border:1px solid #f0d27a;border-radius:12px;padding:12px;display:grid;gap:8px}.pend img{max-width:100%;max-height:340px;border-radius:8px;justify-self:start}.chip.cont{opacity:.6}
 .list{display:grid;gap:8px;margin-top:16px}.row{background:var(--salt);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;cursor:pointer}
 .row .s{color:var(--mute);font-size:.85rem}.tag{font-size:.75rem;padding:2px 8px;border-radius:20px;background:#e8f1f3;color:var(--deep)}.tag.due{background:#fdf0e5;color:var(--warn)}
 .ifw{height:58vh;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#e9ece9}.ifw iframe{width:100%;height:100%;border:0}
@@ -66,6 +66,7 @@ label{display:grid;gap:4px;font-size:.85rem;color:var(--mute)}label input,label 
 <dialog id="dView"><div class="dlg"><h2 id="vt"></h2><div id="vinfo" class="hint"></div>
 <div class="ifw"><iframe id="vinv" title="الفاتورة"></iframe></div>
 <div class="acts"><a id="wC" target="_blank"><button class="pri" type="button">1. ابعت الفاتورة للعميل</button></a><a id="wG" target="_blank"><button class="dark" type="button">2. ابعت لجروب ح مرجانه</button></a><a id="wK" target="_blank"><button type="button">ابعت للريس</button></a><a id="vopen" target="_blank"><button type="button">افتح الفاتورة (PDF / صورة)</button></a><button id="cp" type="button">نسخ اللينك</button></div><pre class="msg" id="vmsg" hidden></pre>
+<div class="pend" id="vpend" hidden><b>حجز من الموقع مستني تأكيد العربون</b><span id="vpinfo"></span><img id="vrc" alt="صورة التحويل" hidden><div class="g2"><input id="vpaid" inputmode="numeric" placeholder="المبلغ اللي وصل"><button class="pri" type="button" id="vconf">تأكيد استلام العربون</button></div></div>
 <div class="acts"><button id="ved" type="button">تعديل</button><button id="vcx" type="button">إلغاء الحجز</button><button id="vdel" type="button" hidden>مسح نهائي</button><span style="flex:1"></span><button type="button" onclick="dView.close()">قفل</button></div>
 <p class="err" id="verr"></p></div></dialog>
 
@@ -105,10 +106,10 @@ function render(){const y=cur.getFullYear(),m=cur.getMonth(),f=BOAT;$('#tabs').i
  for(let i=0;i<42;i++){const d=new Date(start);d.setDate(start.getDate()+i);const s=ymd(d);
   const items=LIST.filter(b=>b.boat==f&&b.start.slice(0,10)<=s&&b.end.slice(0,10)>=s&&!(b.end.slice(0,10)==s&&b.end.slice(11)<='08:00'&&b.start.slice(0,10)!=s));
   h+='<div class="day'+(d.getMonth()!=m?' out':'')+(s==today?' today':'')+'"><div class="n"><span>'+d.getDate()+'</span><button data-new="'+s+'" title="حجز جديد">+</button></div>'+
-   items.map(b=>'<button class="chip '+b.boat+(b.status=='cancelled'?' x':'')+(b.start.slice(0,10)!=s?' cont':'')+'" data-id="'+b.id+'" title="'+boat(b.boat).name+' '+b.start.slice(11)+'">'+esc(b.name)+' · '+(tripLab(b,'ar')||'يوم')+'</button>').join('')+'</div>'}
+   items.map(b=>'<button class="chip '+b.boat+(b.status=='cancelled'?' x':b.status=='pending'?' p':'')+(b.start.slice(0,10)!=s?' cont':'')+'" data-id="'+b.id+'" title="'+boat(b.boat).name+' '+b.start.slice(11)+'">'+esc(b.name)+' · '+(tripLab(b,'ar')||'يوم')+'</button>').join('')+'</div>'}
  $('#cal').innerHTML=h;
  const up=LIST.filter(b=>b.status!='cancelled'&&b.end.slice(0,10)>=today&&b.boat==f);
- $('#up').innerHTML=up.map(b=>{const rest=b.total-b.paid;return '<div class="row" data-id="'+b.id+'"><b>'+b.date.split('-').reverse().join('/')+'</b><span>'+boat(b.boat).name+'</span><span>'+tripLab(b,'ar')+'</span><span>'+esc(b.name)+'</span><span class="s">'+loc(b.phone)+'</span><span class="tag'+(rest?' due':'')+'">'+(rest?'باقي '+fmt(rest):'مدفوع بالكامل')+'</span><span class="s">'+esc(b.by||'')+'</span></div>'}).join('')||'<p class="hint">مفيش حجوزات جاية.</p>'}
+ $('#up').innerHTML=up.map(b=>{const rest=b.total-b.paid;return '<div class="row" data-id="'+b.id+'"><b>'+b.date.split('-').reverse().join('/')+'</b><span>'+boat(b.boat).name+'</span><span>'+tripLab(b,'ar')+'</span><span>'+esc(b.name)+'</span><span class="s">'+loc(b.phone)+'</span><span class="tag'+(rest?' due':'')+'">'+(b.status=='pending'?'⏳ مستني عربون'+(b.receipt?' · رفع التحويل':''):rest?'باقي '+fmt(rest):'مدفوع بالكامل')+'</span><span class="s">'+esc(b.by||'')+'</span></div>'}).join('')||'<p class="hint">مفيش حجوزات جاية.</p>'}
 const esc=s=>String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 document.addEventListener('click',e=>{const t=e.target.closest('[data-boat]');if(t){BOAT=t.dataset.boat;try{localStorage.setItem('mb',BOAT)}catch(x){}return render()}const n=e.target.closest('[data-new]');if(n)return openEdit(null,n.dataset.new);const c=e.target.closest('[data-id]');if(c)openView(c.dataset.id)});
 $('#prev').onclick=()=>{cur=new Date(cur.getFullYear(),cur.getMonth()-1,1);load()};$('#next').onclick=()=>{cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);load()};
@@ -157,12 +158,17 @@ function custMsg(b){if(b.lang=='both'){const u=invUrl(b),dd=b.date.split('-').re
 async function openView(id){let b=LIST.find(x=>x.id==id);if(!b)return;
  if(!b.tok){const j=await api('/api/bookings/'+b.id,{action:'tok'});if(j.booking){Object.assign(b,j.booking)}}
  viewing=b;const bt=boat(b.boat),cap=CFG.captains.find(c=>c.name==b.captain),u=invUrl(b);
- $('#vt').textContent=bt.name+' · '+b.date.split('-').reverse().join('/')+(b.status=='cancelled'?' (ملغي)':'');
+ $('#vt').textContent=bt.name+' · '+b.date.split('-').reverse().join('/')+(b.status=='cancelled'?' (ملغي)':b.status=='pending'?' (مستني عربون)':'');
  $('#vinfo').textContent='سجّله: '+(b.by||'')+(b.source?' · من '+b.source:'')+(b.note?' · '+b.note:'');
  $('#vinv').src=u;$('#vopen').href=u;$('#vmsg').textContent=u;
  $('#wC').href=wa(b.phone,custMsg(b));$('#wG').href=wa('',conf(b)+'\n\n'+u);
  $('#wK').hidden=!cap||!cap.phone;if(cap)$('#wK').href=wa(cap.phone,conf(b));
- $('#vcx').textContent=b.status=='cancelled'?'رجّع الحجز':'إلغاء الحجز';$('#vdel').hidden=!ME.admin;$('#verr').textContent='';dView.showModal()}
+ $('#vcx').textContent=b.status=='cancelled'?'رجّع الحجز':'إلغاء الحجز';$('#vdel').hidden=!ME.admin;$('#verr').textContent='';
+ const pe=b.status=='pending';$('#vpend').hidden=!pe;$('#vrc').hidden=true;
+ if(pe){$('#vpaid').value=b.deposit||Math.ceil(b.total/2);$('#vpinfo').textContent='الإجمالي '+fmt(b.total)+' · العربون المطلوب '+fmt(b.deposit||Math.ceil(b.total/2))+(b.receipt?' · العميل رفع صورة التحويل':' · لسه ما رفعش صورة التحويل');
+  if(b.receipt)fetch('/api/receipt/'+b.id,{headers:{'x-key':KEY}}).then(r=>r.ok?r.blob():null).then(x=>{if(x){$('#vrc').src=URL.createObjectURL(x);$('#vrc').hidden=false}})}
+ dView.showModal()}
+$('#vconf').onclick=async()=>{const j=await api('/api/bookings/'+viewing.id,{action:'confirm',paid:$('#vpaid').value});if(j.error){$('#verr').textContent=j.error=='paid'?'اكتب المبلغ صح':j.error=='clash'?'اليوم محجوز لحد تاني':j.error;return}await load();openView(viewing.id)}
 $('#cp').onclick=()=>navigator.clipboard.writeText(invUrl(viewing)).then(()=>{$('#cp').textContent='اتنسخ ✓';setTimeout(()=>$('#cp').textContent='نسخ اللينك',1500)});
 $('#ved').onclick=()=>openEdit(viewing);
 $('#vcx').onclick=async()=>{const a=viewing.status=='cancelled'?'restore':'cancel';if(a=='cancel'&&!confirm('تلغي الحجز ده؟'))return;const j=await api('/api/bookings/'+viewing.id,{action:a});if(j.error){$('#verr').textContent=j.error=='clash'?'المركب اتحجز في نفس الوقت':j.error;return}dView.close();load()};

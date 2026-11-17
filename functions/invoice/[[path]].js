@@ -3,14 +3,14 @@ import {esc, fmt} from '../_lib.js';
 import {getCfg} from '../_bk.js';
 
 const T = {
-  ar: {dir: 'rtl', title: 'فاتورة حجز', status: {confirmed: 'مؤكد', cancelled: 'ملغي'}, no: 'رقم الحجز', billed: 'باسم', phone: 'موبايل', date: 'ميعاد الرحلة',
+  ar: {dir: 'rtl', title: 'فاتورة حجز', status: {confirmed: 'مؤكد', cancelled: 'ملغي', pending: 'في انتظار العربون'}, no: 'رقم الحجز', billed: 'باسم', phone: 'موبايل', date: 'ميعاد الرحلة',
     desc: 'البيان', amount: 'المبلغ (جنيه)', total: 'إجمالي الحجز', paid: 'المدفوع (عربون)', due: 'الباقي يدفع عند الوصول', cur: 'جنيه',
     guests: 'عدد الأفراد', marina: 'مكان التحرك', captain: 'الريس', map: 'افتح اللوكيشن على الخريطة',
     notes: 'مهم', n1: 'هاتوا معاكم البطايق أو الباسبورات أو شهادات الميلاد للأطفال (الأصل).', n2: 'ممنوع تمامًا اصطحاب أو تناول الكحوليات على اليخت.', n3: 'المارينا بتفتح الساعة 6 الصبح.',
     thanks: 'شكرًا لاختياركم Morgana', see: 'مستنيينكم ونتمنالكم يوم جميل.', next: 'تاني يوم', pdf: 'حفظ PDF', img: 'حفظ كصورة / مشاركة',
     days: ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'], months: ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'],
     trip: {day: 'رحلة يوم كامل', night: 'رحلة مسائية', h24: 'رحلة 24 ساعة', sunset: 'رحلة الغروب', custom: 'رحلة'}, fish: 'صيد', outing: 'نزهة', on: 'على يخت'},
-  en: {dir: 'ltr', title: 'Booking invoice', status: {confirmed: 'CONFIRMED', cancelled: 'CANCELLED'}, no: 'Booking no.', billed: 'Billed to', phone: 'Phone', date: 'Booking date',
+  en: {dir: 'ltr', title: 'Booking invoice', status: {confirmed: 'CONFIRMED', cancelled: 'CANCELLED', pending: 'AWAITING DEPOSIT'}, no: 'Booking no.', billed: 'Billed to', phone: 'Phone', date: 'Booking date',
     desc: 'Description', amount: 'Amount (EGP)', total: 'Total booking amount', paid: 'Payment received', due: 'Balance due on arrival', cur: 'EGP',
     guests: 'Guests', marina: 'Departure', captain: 'Captain', map: 'Open location in Google Maps',
     notes: 'Important', n1: 'Please bring original national IDs or passports, and birth certificates for children.', n2: 'Alcohol is strictly not allowed on board.', n3: 'The marina opens at 6 AM.',
@@ -41,7 +41,7 @@ export async function onRequestGet({params, env}) {
   const kind = b.trip.startsWith('night') ? 'night' : b.trip.startsWith('h24') ? 'h24' : (E.trip[b.trip] ? b.trip : 'custom');
   const what = t => `${t.trip[kind]} – ${b.kind === 'fishing' ? t.fish : t.outing} ${t.on} ${boat.name}`;
   const rest = b.total - b.paid, money = n => `EGP ${fmt(n)}`;
-  const st = b.status === 'cancelled' ? 'cancelled' : 'confirmed', ref = esc(b.id.slice(0, 6).toUpperCase());
+  const st = ['cancelled', 'pending'].includes(b.status) ? b.status : 'confirmed', ref = esc(b.id.slice(0, 6).toUpperCase());
   const lab = k => `<p class="lab">${E[k]} <span class="ar">${A[k]}</span></p>`;
   const two = (en, ar) => `<div>${en}</div><div class="ar sub2">${ar}</div>`;
   const row = (k, v, cls = '') => `<div class="row ${cls}"><span>${E[k]}<span class="ar sub2">${A[k]}</span></span><b>${v}</b></div>`;
@@ -73,7 +73,7 @@ ul{margin:8px 0 0;padding-left:20px;line-height:1.8}ul.ar{padding:0 20px 0 0;tex
 <div>${lab('date')}<p class="big">${dEn}</p><div class="ar sub2" style="font-weight:700;font-size:16px">${dAr}</div><div style="margin-top:8px">${tm('en', E)}</div><div class="ar sub2">${tm('ar', A)}</div></div></div>
 <hr>
 <div class="row lab"><span>${E.desc} <span class="ar">${A.desc}</span></span><span>${E.amount}</span></div>
-<div class="row"><div><b>${esc(what(E))}</b><div class="ar sub2" style="font-weight:700">${esc(what(A))}</div><div class="sub">${dEn} | ${tm('en', E)}</div></div><b>${fmt(b.total)}</b></div>
+${b.items && b.items.length ? b.items.map(it => `<div class="row"><div><b>${esc(it.en)}${it.qty > 1 ? ` × ${it.qty}` : ''}</b><div class="ar sub2" style="font-weight:700">${esc(it.ar)}${it.qty > 1 ? ` × ${it.qty}` : ''}</div>${it.k === 'base' ? `<div class="sub">${dEn} | ${tm('en', E)}</div>` : ''}</div><b>${fmt(it.amount)}</b></div>`).join('') : `<div class="row"><div><b>${esc(what(E))}</b><div class="ar sub2" style="font-weight:700">${esc(what(A))}</div><div class="sub">${dEn} | ${tm('en', E)}</div></div><b>${fmt(b.total)}</b></div>`}
 <hr>
 ${row('total', money(b.total))}
 ${row('paid', money(b.paid))}

@@ -17,6 +17,15 @@ export async function onRequestPost({request, env, params}) {
     await env.BOATS.put(`bk:${date}:${b.id}`, JSON.stringify(b));
     return json({ok: true, booking: b});
   }
+  if (body.action === 'confirm') {
+    const paid = Math.max(0, Math.round(Number(body.paid) || 0));
+    if (!paid || paid > old.total) return json({error: 'paid'}, 400);
+    const b = {...old, status: 'confirmed', paid, log};
+    const c = await clash(env, b);
+    if (c && !body.force) return json({error: 'clash', with: {name: c.name, start: c.start, end: c.end}}, 409);
+    await env.BOATS.put(`bk:${date}:${b.id}`, JSON.stringify(b));
+    return json({ok: true, booking: b});
+  }
   if (body.action === 'tok') {
     if (old.tok) return json({ok: true, booking: old});
     const b = {...old, tok: rid(14)};
