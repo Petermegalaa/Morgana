@@ -9,7 +9,7 @@ export async function onRequestPost({request, env}) {
   const b = raw && JSON.parse(raw);
   if (!b || b.tok !== tok) return json({error: 'not_found'}, 404);
   if (b.status !== 'pending') return json({error: 'closed', status: b.status}, 400);
-  if ((b.tries || 0) >= 6) return json({error: 'tries'}, 429);
+  if ((b.tries || 0) >= (u.hostname.endsWith('.pages.dev') ? 30 : 6)) return json({error: 'tries'}, 429);
   const type = request.headers.get('content-type') || '';
   if (!/^image\/(jpeg|png|webp)$/.test(type)) return json({error: 'type'}, 400);
   const buf = await request.arrayBuffer();
@@ -23,7 +23,7 @@ export async function onRequestPost({request, env}) {
   const used = ref.length >= 8 ? await env.BOATS.get('ref:' + ref) : null;
   const v = checkReceipt(data, b, Date.now(), used);
   b.verify = {at: Date.now(), ok: v.ok, reasons: v.reasons, read: data && !data.error ? data : {error: data && data.error, detail: data && (data.detail || data.raw)}};
-  let result = {ok: true, confirmed: false};
+  let result = {ok: true, confirmed: false, rejected: v.ok ? [] : v.codes};
   if (v.ok) {
     b.payments = (b.payments || []).concat({ref: v.reference, amount: v.amount, when: v.when, img: n});
     await env.BOATS.put('ref:' + v.reference, b.id);
