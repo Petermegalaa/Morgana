@@ -14,7 +14,8 @@ export async function onRequestPost({request, env}) {
   const ip = request.headers.get('cf-connecting-ip') || '0';
   const ipKey = 'bip:' + (await sha256(ip)).slice(0, 16) + ':' + new Date().toISOString().slice(0, 10);
   const n = Number(await env.BOATS.get(ipKey) || 0);
-  if (n >= 4) return json({error: 'limit'}, 429);
+  const LIMIT = new URL(request.url).hostname.endsWith('.pages.dev') ? 50 : 4;   // relaxed on the test copy only
+  if (n >= LIMIT) return json({error: 'limit'}, 429);
 
   const date = clean(body.date, 10), today = new Date(Date.now() + 2 * 3600e3).toISOString().slice(0, 10);
   const bad = [];
