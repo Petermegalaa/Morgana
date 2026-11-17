@@ -17,7 +17,7 @@ jobs:
         run: |
           ID=$(npx -y wrangler@3 kv namespace list | jq -r '.[] | select(.title|test("morgana-boats")) | .id' | head -1)
           test -n "$ID" || { echo "KV namespace not found"; exit 1; }
-          printf 'name = "morgana-yacht"\npages_build_output_dir = "site"\ncompatibility_date = "2026-11-01"\n\n[[kv_namespaces]]\nbinding = "BOATS"\nid = "%s"\n' "$ID" > wrangler.toml
+          printf 'name = "morgana-yacht"\npages_build_output_dir = "site"\ncompatibility_date = "2026-11-01"\n\n[[kv_namespaces]]\nbinding = "BOATS"\nid = "%s"\n\n[ai]\nbinding = "AI"\n' "$ID" > wrangler.toml
           cat wrangler.toml
       - name: Deploy to the test branch (preview URL, not the live domain)
         run: npx -y wrangler@3 pages deploy --branch=test --commit-dirty=true

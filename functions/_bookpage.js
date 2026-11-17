@@ -17,7 +17,7 @@ const T = {
     sum: 'ملخص الحجز', total: 'الإجمالي', dep: 'العربون (نص المبلغ)', rest: 'الباقي يوم الرحلة', cur: 'جنيه',
     go: 'كمّل للدفع', free: 'اليوم ده متاح ✓', busy: 'اليوم ده محجوز، اختار يوم تاني', pick: 'اختار يوم عشان نشوف المتاح',
     pay: 'ادفع العربون', payTxt: 'حجزك اتسجل برقم', payHow: 'حوّل العربون بانستاباي من الزرار ده، وبعدين ارفع صورة التحويل هنا. أول ما نتأكد من التحويل هنبعتلك تأكيد الحجز على واتساب.',
-    ipn: 'ادفع بانستاباي', up: 'ارفع صورة التحويل', upd: 'استلمنا صورة التحويل ✓ هنأكدلك الحجز على واتساب قريب.', wa: 'ابعتلنا على واتساب', inv: 'شوف فاتورة الحجز',
+    ipn: 'ادفع بانستاباي', up: 'ارفع صورة التحويل', upd: 'استلمنا صورة التحويل ✓ هنراجعها ونأكدلك الحجز على واتساب قريب.', okc: '✅ تم تأكيد حجزك! وصلنا العربون {x} جنيه، والفاتورة اتحدّثت.', wa: 'ابعتلنا على واتساب', inv: 'شوف فاتورة الحجز',
     hold: 'اليوم محجوزلك 24 ساعة لحد ما يوصل التحويل.',
     errs: {date: 'اختار يوم بعد النهارده', name: 'اكتب اسمك', phone: 'رقم الموبايل مش صح', guests: 'عدد الأفراد أكتر من اللي اليخت ياخده', trip: 'الرحلة دي مش متاحة في اليوم ده', taken: 'اليوم ده اتحجز، اختار يوم تاني', limit: 'جربت كتير النهارده، كلمنا على واتساب', slow: 'استنى ثواني وجرب تاني', net: 'حصلت مشكلة، جرب تاني'},
     note2: 'الإجازات الرسمية بتتحسب بسعر الجمعة. الأسعار بالجنيه المصري، ولايف جاكيت مجانًا.',
@@ -34,7 +34,7 @@ const T = {
     sum: 'Booking summary', total: 'Total', dep: 'Deposit (50%)', rest: 'Balance on the day', cur: 'EGP',
     go: 'Continue to payment', free: 'This day is available ✓', busy: 'This day is booked, please pick another', pick: 'Pick a day to check availability',
     pay: 'Pay the deposit', payTxt: 'Your booking request no.', payHow: 'Send the deposit with InstaPay using the button below, then upload the transfer screenshot here. We confirm your booking on WhatsApp as soon as we see the transfer.',
-    ipn: 'Pay with InstaPay', up: 'Upload transfer screenshot', upd: 'Got your transfer screenshot ✓ We will confirm on WhatsApp shortly.', wa: 'Message us on WhatsApp', inv: 'View booking invoice',
+    ipn: 'Pay with InstaPay', up: 'Upload transfer screenshot', upd: 'Got your transfer screenshot ✓ We will check it and confirm on WhatsApp shortly.', okc: '✅ Your booking is confirmed! We received your EGP {x} deposit and your invoice is updated.', wa: 'Message us on WhatsApp', inv: 'View booking invoice',
     hold: 'The day is held for you for 24 hours until the transfer arrives.',
     errs: {date: 'Pick a date after today', name: 'Please enter your name', phone: 'Mobile number is not valid', guests: 'Too many guests for this yacht', trip: 'This trip is not available on that day', taken: 'That day was just booked, pick another', limit: 'Too many attempts today, please WhatsApp us', slow: 'Wait a few seconds and try again', net: 'Something went wrong, try again'},
     note2: 'Public holidays are priced as Friday. Prices in Egyptian pounds; life jackets are free.',
@@ -99,7 +99,7 @@ export async function bookPage(request, env, L) {
 @media(max-width:860px){.boats{grid-template-columns:1fr}.bk-grid{grid-template-columns:1fr}.sum{position:static}.r2{grid-template-columns:1fr}}
 </style>
 <script>(function(){
-var L=${JSON.stringify(L)},T=${JSON.stringify({errs: t.errs, free: t.free, busy: t.busy, pick: t.pick, cur: t.cur, upd: t.upd, gmax: t.gmax, mfx: t.mfx, from: t.from, to: t.to, nextd: t.nextd})},LAB=${JSON.stringify(labels)},WA=${JSON.stringify(WA)};
+var L=${JSON.stringify(L)},T=${JSON.stringify({errs: t.errs, free: t.free, busy: t.busy, pick: t.pick, cur: t.cur, upd: t.upd, okc: t.okc, gmax: t.gmax, mfx: t.mfx, from: t.from, to: t.to, nextd: t.nextd})},LAB=${JSON.stringify(labels)},WA=${JSON.stringify(WA)};
 var __name=function(f){return f},__name2=__name;   // bundler keep-names helper used inside quote()
 var quote=${quote.toString()};
 var f=document.getElementById('bf'),q={rods:0,bait:0},busy=[],busyKey='',t0=Date.now(),taken=false,HOL=[];
@@ -143,11 +143,11 @@ $('go').onclick=async function(){$('err').textContent='';var s=state();
  BK=j;document.querySelector('.bk-grid').hidden=true;$('pay').hidden=false;$('pdep').textContent=money(j.deposit);$('pref').textContent=j.ref;$('pinv').href=j.invoice;
  $('pwa').href='https://wa.me/'+WA+'?text='+encodeURIComponent((L==='en'?'Hello, I booked online. Booking no. ':'أهلا، أنا حجزت من الموقع. رقم الحجز ')+j.ref+' – '+s.boat+' – '+s.date+' – '+location.origin+j.invoice);
  $('pay').scrollIntoView({behavior:'smooth'})};
-$('rc').onchange=async function(){var file=this.files[0];if(!file||!BK)return;$('rcs').textContent='…';
+$('rc').onchange=async function(){var file=this.files[0];if(!file||!BK)return;$('rcs').textContent='…';$('rcs').className='mini';
  var img=await createImageBitmap(file),sc=Math.min(1,1600/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*sc);c.height=Math.round(img.height*sc);c.getContext('2d').drawImage(img,0,0,c.width,c.height);
  var blob,qq=.85;do{blob=await new Promise(function(r){c.toBlob(r,'image/jpeg',qq)});qq-=.15}while(blob.size>1100000&&qq>.3);
  var r=await fetch('/api/book/receipt?id='+BK.id+'&tok='+BK.tok,{method:'POST',headers:{'content-type':'image/jpeg'},body:blob});var j=await r.json().catch(function(){return{}});
- $('rcs').textContent=j.ok?T.upd:T.errs.net};
+ if(j.ok&&j.confirmed){$('rcs').textContent=T.okc.replace('{x}',Number(j.paid).toLocaleString('en-US'));$('rcs').className='av ok'}else $('rcs').textContent=j.ok||j.error==='closed'?T.upd:T.errs.net};
 avail();
 })();</script>
 </main>`;

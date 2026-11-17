@@ -64,9 +64,10 @@ label{display:grid;gap:4px;font-size:.85rem;color:var(--mute)}label input,label 
 </form></dialog>
 
 <dialog id="dView"><div class="dlg"><h2 id="vt"></h2><div id="vinfo" class="hint"></div>
+<div class="pend" id="vpend" hidden><b>حجز من الموقع مستني تأكيد العربون</b><span id="vpinfo"></span><span id="vver" style="white-space:pre-line"></span><img id="vrc" alt="صورة التحويل" hidden><div class="g2"><input id="vpaid" inputmode="numeric" placeholder="المبلغ اللي وصل"><button class="pri" type="button" id="vconf">تأكيد استلام العربون</button></div></div>
 <div class="ifw"><iframe id="vinv" title="الفاتورة"></iframe></div>
 <div class="acts"><a id="wC" target="_blank"><button class="pri" type="button">1. ابعت الفاتورة للعميل</button></a><a id="wG" target="_blank"><button class="dark" type="button">2. ابعت لجروب ح مرجانه</button></a><a id="wK" target="_blank"><button type="button">ابعت للريس</button></a><a id="vopen" target="_blank"><button type="button">افتح الفاتورة (PDF / صورة)</button></a><button id="cp" type="button">نسخ اللينك</button></div><pre class="msg" id="vmsg" hidden></pre>
-<div class="pend" id="vpend" hidden><b>حجز من الموقع مستني تأكيد العربون</b><span id="vpinfo"></span><img id="vrc" alt="صورة التحويل" hidden><div class="g2"><input id="vpaid" inputmode="numeric" placeholder="المبلغ اللي وصل"><button class="pri" type="button" id="vconf">تأكيد استلام العربون</button></div></div>
+
 <div class="acts"><button id="ved" type="button">تعديل</button><button id="vcx" type="button">إلغاء الحجز</button><button id="vdel" type="button" hidden>مسح نهائي</button><span style="flex:1"></span><button type="button" onclick="dView.close()">قفل</button></div>
 <p class="err" id="verr"></p></div></dialog>
 
@@ -161,13 +162,14 @@ async function openView(id){let b=LIST.find(x=>x.id==id);if(!b)return;
  if(!b.tok){const j=await api('/api/bookings/'+b.id,{action:'tok'});if(j.booking){Object.assign(b,j.booking)}}
  viewing=b;const bt=boat(b.boat),cap=CFG.captains.find(c=>c.name==b.captain),u=invUrl(b);
  $('#vt').textContent=bt.name+' · '+b.date.split('-').reverse().join('/')+(b.status=='cancelled'?' (ملغي)':b.status=='pending'?' (مستني عربون)':'');
- $('#vinfo').textContent='سجّله: '+(b.by||'')+(b.source?' · من '+b.source:'')+(b.note?' · '+b.note:'');
+ $('#vinfo').textContent=(b.confirmedBy?'✓ اتأكد بـ '+b.confirmedBy+' · ':'')+'سجّله: '+(b.by||'')+(b.source?' · من '+b.source:'')+(b.note?' · '+b.note:'');
  $('#vinv').src=u;$('#vopen').href=u;$('#vmsg').textContent=u;
  $('#wC').href=wa(b.phone,custMsg(b));$('#wG').href=wa('',conf(b)+'\n\n'+u);
  $('#wK').hidden=!cap||!cap.phone;if(cap)$('#wK').href=wa(cap.phone,conf(b));
  $('#vcx').textContent=b.status=='cancelled'?'رجّع الحجز':'إلغاء الحجز';$('#vdel').hidden=!ME.admin;$('#verr').textContent='';
  const pe=b.status=='pending';$('#vpend').hidden=!pe;$('#vrc').hidden=true;
  if(pe){$('#vpaid').value=b.deposit||Math.ceil(b.total/2);$('#vpinfo').textContent='الإجمالي '+fmt(b.total)+' · العربون المطلوب '+fmt(b.deposit||Math.ceil(b.total/2))+(b.receipt?' · العميل رفع صورة التحويل':' · لسه ما رفعش صورة التحويل');
+  $('#vver').textContent=b.verify?(b.verify.ok?'':'الفحص الأوتوماتيك لصورة التحويل ما عدّاش:\n• '+b.verify.reasons.join('\n• ')):'';
   if(b.receipt)fetch('/api/receipt/'+b.id,{headers:{'x-key':KEY}}).then(r=>r.ok?r.blob():null).then(x=>{if(x){$('#vrc').src=URL.createObjectURL(x);$('#vrc').hidden=false}})}
  dView.showModal()}
 $('#vconf').onclick=async()=>{const j=await api('/api/bookings/'+viewing.id,{action:'confirm',paid:$('#vpaid').value});if(j.error){$('#verr').textContent=j.error=='paid'?'اكتب المبلغ صح':j.error=='clash'?'اليوم محجوز لحد تاني':j.error;return}await load();openView(viewing.id)}
