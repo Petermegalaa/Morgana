@@ -9,7 +9,7 @@ export const DEFAULT_CFG = {
   ],
   marinas: {
     portrait: {ar: 'مارينا جنب فندق بورتريه السخنة', en: 'Marina next to Portrait Sokhna hotel', map: 'https://maps.app.goo.gl/SXAujUUTXbg5q87i8'},
-    wadi: {ar: 'مارينا وادي الدوم قدام بورتو السخنة', en: 'Wadi El Dom marina, opposite Porto Sokhna', map: ''},
+    wadi: {ar: 'مارينا وادي الدوم قدام بورتو السخنة', en: 'Wadi El Dom marina, opposite Porto Sokhna', map: 'https://maps.app.goo.gl/fnPFjEPq157Mbbgw7'},
   },
   captains: [],   // [{name, phone}] — added from the board's settings, never hard-coded
   staff: [],      // [{name, keyHash}]
@@ -18,7 +18,9 @@ export const DEFAULT_CFG = {
 export async function getCfg(env) {
   const raw = await env.BOATS.get('cfg');
   const c = raw ? JSON.parse(raw) : {};
-  return {...DEFAULT_CFG, ...c, marinas: {...DEFAULT_CFG.marinas, ...(c.marinas || {})}};
+  const marinas = {};
+  for (const [k, d] of Object.entries(DEFAULT_CFG.marinas)) { const m = (c.marinas || {})[k] || {}; marinas[k] = {...d, ...m, map: m.map || d.map}; }
+  return {...DEFAULT_CFG, ...c, marinas};
 }
 
 // Returns {name, admin} for a valid key, else null.
