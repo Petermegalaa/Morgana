@@ -24,7 +24,9 @@ export async function readReceipt(env, buf) {
     if (!/agree/i.test(String(e))) return {error: 'ai', detail: String(e).slice(0, 200)};
     try { await env.AI.run(MODEL, {prompt: 'agree'}); r = await run(); } catch (e2) { return {error: 'ai', detail: String(e2).slice(0, 200)}; }
   }
-  const txt = (r && (r.response || r.result || '')) + '';
+  const out = r && (r.response ?? r.result ?? r);
+  if (out && typeof out === 'object' && ('status' in out || 'amount' in out)) return out;
+  const txt = typeof out === 'string' ? out : JSON.stringify(out || '');
   const m = txt.match(/\{[\s\S]*\}/);
   if (!m) return {error: 'parse', raw: txt.slice(0, 300)};
   try { return JSON.parse(m[0]); } catch (e) { return {error: 'parse', raw: txt.slice(0, 300)}; }
