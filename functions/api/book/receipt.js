@@ -21,7 +21,7 @@ export async function onRequestPost({request, env}) {
   const ref = String((data && data.reference) || '').replace(/\D/g, '');
   const used = ref.length >= 8 ? await env.BOATS.get('ref:' + ref) : null;
   const v = checkReceipt(data, b, Date.now(), used);
-  b.verify = {at: Date.now(), ok: v.ok, reasons: v.reasons, read: data && !data.error ? data : {error: data && data.error}};
+  b.verify = {at: Date.now(), ok: v.ok, reasons: v.reasons, read: data && !data.error ? data : {error: data && data.error, detail: data && (data.detail || data.raw)}};
   if (v.ok) {
     b.status = 'confirmed'; b.paid = v.amount; b.confirmedBy = 'انستاباي (أوتوماتيك)';
     b.log = (b.log || []).concat({t: Date.now(), by: 'auto', a: 'confirm', ref: v.reference});
