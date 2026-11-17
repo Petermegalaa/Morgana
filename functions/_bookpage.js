@@ -9,7 +9,7 @@ const T = {
     title: 'احجز رحلتك واحجز بالعربون | Morgana Yacht', h1: 'احجز يختك أونلاين',
     lead: 'اختار اليوم والإضافات، وشوف السعر على طول. بتدفع نص المبلغ عربون، والباقي يوم الرحلة.',
     s0: 'اختار اليخت', boats: {morgana: ['Morgana', 'لحد 10 أفراد · صيد وإضافات'], portofino2: ['Portofino 2', 'لحد 25 فرد'], coquette: ['Coquette', 'لحد 30 فرد']},
-    tday: 'يوم كامل', tsun: 'رحلة الغروب 4 – 6 (صيف)', hol: 'اليوم ده إجازة رسمية، بيتحسب بسعر الجمعة', from: 'من', to: 'لـ', nextd: 'تاني يوم', noday: 'اليوم الكامل لليخت ده في الصيف بيتحجز على واتساب',
+    tday: 'يوم كامل', tsun: 'رحلة الغروب 4 – 6 (صيف)', hol: 'اليوم ده إجازة رسمية، بيتحسب بسعر الجمعة', mfee: 'ℹ️ رسوم دخول مارينا وادي الدوم 40 جنيه، بتتدفع للمارينا مباشرة ومش ضمن سعر الرحلة.', from: 'من', to: 'لـ', nextd: 'تاني يوم', noday: 'اليوم الكامل لليخت ده في الصيف بيتحجز على واتساب',
     s1: 'ميعاد الرحلة', date: 'اليوم', guests: 'عدد الأفراد', time: 'يوم كامل من 6 الصبح لـ 5 العصر', time24: '24 ساعة: من 6 الصبح لـ 6 الصبح تاني يوم',
     s2: 'الإضافات', fishing: 'رحلة صيد', h24: 'خلّيها 24 ساعة', rod: 'سنارة', bait: 'طبق طعم (نص كيلو جمبري)', each: 'للواحدة', plate: 'للطبق',
     s3: 'بياناتك', name: 'الاسم', phone: 'رقم الموبايل (واتساب)', phone2: 'رقم تاني (اختياري)', note: 'ملاحظات (اختياري)',
@@ -26,7 +26,7 @@ const T = {
     title: 'Book online & pay deposit | Morgana Yacht', h1: 'Book your yacht online',
     lead: 'Pick your day and add-ons and see the price instantly. Pay half as a deposit, the rest on the day.',
     s0: 'Choose your yacht', boats: {morgana: ['Morgana', 'Up to 10 guests · fishing & add-ons'], portofino2: ['Portofino 2', 'Up to 25 guests'], coquette: ['Coquette', 'Up to 30 guests']},
-    tday: 'Full day', tsun: 'Sunset trip 4 – 6 PM (summer)', hol: 'Public holiday: priced as Friday', from: 'From', to: 'to', nextd: 'next day', noday: 'Summer full days on this yacht are booked on WhatsApp',
+    tday: 'Full day', tsun: 'Sunset trip 4 – 6 PM (summer)', hol: 'Public holiday: priced as Friday', mfee: 'ℹ️ Wadi El Dom marina entry fee is EGP 40, paid directly to the marina (not included in the trip price).', from: 'From', to: 'to', nextd: 'next day', noday: 'Summer full days on this yacht are booked on WhatsApp',
     s1: 'Trip date', date: 'Date', guests: 'Guests', time: 'Full day, 6 AM – 5 PM', time24: '24 hours: 6 AM – 6 AM next day',
     s2: 'Add-ons', fishing: 'Fishing trip', h24: 'Make it 24 hours', rod: 'Fishing rod', bait: 'Bait plate (½ kg shrimp)', each: 'each', plate: 'per plate',
     s3: 'Your details', name: 'Name', phone: 'Mobile (WhatsApp)', phone2: 'Second number (optional)', note: 'Notes (optional)',
@@ -52,12 +52,12 @@ export async function bookPage(request, env, L) {
 <fieldset><legend>${t.s0}</legend><div class="boats">${Object.entries(t.boats).map(([k, v], i) => `<label class="bt"><input type="radio" name="boat" value="${k}"${i ? '' : ' checked'}><b>${v[0]}</b><small>${v[1]}</small></label>`).join('')}</div></fieldset>
 <fieldset><legend>${t.s1}</legend>
 <div class="r2"><label>${t.date}<input type="date" name="date" id="bdate" required></label><label>${t.guests}<input type="number" name="guests" min="1" max="10" value="2" inputmode="numeric" id="bguests"></label></div>
-<div class="trips"><label id="w_day"><input type="radio" name="trip" value="day" checked> ${t.tday}</label><label id="w_sun"><input type="radio" name="trip" value="sunset"> ${t.tsun}</label></div><p class="mini" id="noday" hidden>${t.noday}</p><p class="av" id="av">${t.pick}</p><p class="mini" id="hol" hidden>${t.hol}</p><p class="mini" id="btime">${t.time}</p></fieldset>
+<div class="trips"><label id="w_day"><input type="radio" name="trip" value="day" checked> ${t.tday}</label><label id="w_sun"><input type="radio" name="trip" value="sunset"> ${t.tsun}</label></div><p class="mini" id="noday" hidden>${t.noday}</p><p class="av" id="av">${t.pick}</p><p class="mini" id="hol" hidden>${t.hol}</p><p class="mfee" id="mfee" hidden>${t.mfee}</p><p class="mini" id="btime">${t.time}</p></fieldset>
 <fieldset id="addf"><legend>${t.s2}</legend>
 <label class="add" id="w_fish"><input type="checkbox" name="fishing"><span>${t.fishing}</span><b id="p_fish">+2,000</b></label>
 <label class="add" id="w_24"><input type="checkbox" name="h24"><span>${t.h24}</span><b id="p_24"></b></label>
-<div class="add"><span>${t.rod} <small>100 ${t.each}</small></span><div class="qty"><button type="button" data-q="rods" data-d="-1">−</button><output id="q_rods">0</output><button type="button" data-q="rods" data-d="1">+</button></div></div>
-<div class="add"><span>${t.bait} <small>150 ${t.plate}</small></span><div class="qty"><button type="button" data-q="bait" data-d="-1">−</button><output id="q_bait">0</output><button type="button" data-q="bait" data-d="1">+</button></div></div>
+<div class="add"><span>${t.rod} <small><span class="p_rod">100</span> ${t.each}</small></span><div class="qty"><button type="button" data-q="rods" data-d="-1">−</button><output id="q_rods">0</output><button type="button" data-q="rods" data-d="1">+</button></div></div>
+<div class="add"><span>${t.bait} <small><span class="p_bait">150</span> ${t.plate}</small></span><div class="qty"><button type="button" data-q="bait" data-d="-1">−</button><output id="q_bait">0</output><button type="button" data-q="bait" data-d="1">+</button></div></div>
 </fieldset>
 <fieldset><legend>${t.s3}</legend>
 <div class="r2"><label>${t.name}<input name="name" required autocomplete="name"></label><label>${t.phone}<input name="phone" required inputmode="tel" autocomplete="tel" placeholder="01xxxxxxxxx" dir="ltr"></label></div>
@@ -88,7 +88,7 @@ export async function bookPage(request, env, L) {
 .qty{display:flex;align-items:center;gap:6px}.qty button{width:36px;height:36px;border-radius:50%;border:1px solid color-mix(in srgb,var(--mute) 40%,transparent);background:var(--salt);color:var(--ink);font-size:1.2rem;cursor:pointer}.qty output{min-width:24px;text-align:center;font-weight:700}
 .boats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.bt{position:relative;border:2px solid color-mix(in srgb,var(--mute) 30%,transparent);border-radius:16px;padding:14px!important;cursor:pointer;color:var(--ink)!important}.bt input{position:absolute;opacity:0}.bt b{font-size:1.15rem}.bt small{color:var(--mute)}.bt:has(input:checked){border-color:var(--coral);background:color-mix(in srgb,var(--coral) 8%,transparent)}
 .trips{display:flex;gap:16px;flex-wrap:wrap;margin:4px 0}.trips label{display:flex!important;align-items:center;gap:6px;color:var(--ink)!important;font-size:1rem!important}.trips input{accent-color:var(--coral);width:18px;height:18px}
-.av{font-weight:700;margin:6px 0 0}.av.ok{color:#1f8a5b}.av.no{color:var(--coral)}
+.mfee{background:color-mix(in srgb,var(--sun) 18%,transparent);border-radius:12px;padding:10px 12px;margin:8px 0 0;font-size:.92rem}.av{font-weight:700;margin:6px 0 0}.av.ok{color:#1f8a5b}.av.no{color:var(--coral)}
 .sum{position:sticky;top:90px;background:var(--shell);border-radius:20px;padding:20px}.sum h2{margin:0 0 10px;font-size:1.4rem}
 .sum .ln{display:flex;justify-content:space-between;gap:10px;padding:6px 0;font-size:.95rem}.sum .ln small{color:var(--mute)}
 .sum .tot,.sum .dep,.sum .rest{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid color-mix(in srgb,var(--mute) 25%,transparent)}
@@ -114,8 +114,8 @@ function hr(t){var h=+t.slice(0,2),m=t.slice(3),mm=m==='00'?'':':'+m,h12=(h%12)|
 function opts(){var s=state(),d=s.date||add(ymd(new Date()),1),r=quote(Object.assign({},s,{date:d,trip:'day'}));if(!r.opts)r=quote(Object.assign({},s,{date:d,trip:'sunset'}));var o=r.opts||{};
  $('w_day').hidden=!o.day;$('w_sun').hidden=!o.sunset;$('noday').hidden=!!o.day||!s.date;
  if(!o[f.trip.value]){f.trip.value=o.day?'day':'sunset'}
- var day=f.trip.value==='day';$('addf').hidden=!o.addons||!day;$('w_fish').hidden=!day;$('w_24').hidden=!(o.h24&&day);if(!(o.h24&&day))f.h24.checked=false;if(!day)f.fishing.checked=false;
- if(r.add){$('p_24').textContent='+'+Number(r.add.h24).toLocaleString('en-US');}
+ var day=f.trip.value==='day';$('addf').hidden=!day;$('w_fish').hidden=!(o.addons&&day);$('mfee').hidden=!o.marinaFee;$('w_24').hidden=!(o.h24&&day);if(!(o.h24&&day))f.h24.checked=false;if(!day)f.fishing.checked=false;
+ if(r.add){$('p_24').textContent='+'+Number(r.add.h24).toLocaleString('en-US');document.querySelector('.p_rod').textContent=r.add.rod;document.querySelector('.p_bait').textContent=r.add.bait}
  if(r.cap){$('bguests').max=r.cap;if(+f.guests.value>r.cap)f.guests.value=r.cap}}
 async function avail(){opts();var s=state(),av=$('av');taken=false;$('hol').hidden=!s.holiday;if(!s.date){av.textContent=T.pick;av.className='av';calc();return}
  var r=quote(s);if(!r.ok){av.textContent='';calc();return}

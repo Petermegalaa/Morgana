@@ -8,10 +8,10 @@ export function quote(o) {
       summer: {day: null, sunset: [2000, 2500], hours: ['06:00', '16:00']}},
     portofino2: {cap: 25, addons: false,
       winter: {day: [8000, 11000, 14000], hours: ['06:00', '16:00']},
-      summer: {day: null, sunset: [4000, 4000], hours: ['06:00', '16:00']}},
+      summer: {week: [11000, 10000, 10000, 10000, 11000, 16500, 12000], sunset: [4000, 4000], hours: ['06:00', '16:00']}},
     coquette: {cap: 30, addons: false,
       winter: {day: [10000, 12000, 15000], hours: ['06:00', '16:00']},
-      summer: {day: null, sunset: [4000, 4000], hours: ['06:00', '16:00']}},
+      summer: {week: [12000, 11000, 11000, 11000, 12000, 18000, 14000], sunset: [4000, 4000], hours: ['06:00', '16:00']}},
   };
   var b = P[o.boat];
   if (!b || !/^\d{4}-\d{2}-\d{2}$/.test(o.date || '')) return {ok: false, err: 'date'};
@@ -20,17 +20,18 @@ export function quote(o) {
   var fri = w === 5 || !!o.holiday, sat = w === 6 && !fri;
   var idx = fri ? 2 : sat ? 1 : 0;                      // [Sun–Thu, Sat, Fri / public holiday]
   if (o.boat === 'morgana' && season === 'summer') S = Object.assign({}, S, {day: [fri ? 12000 : sat ? 8500 : (w === 0 || w === 4) ? 7000 : 6000]});
+  if (S.week) S = Object.assign({}, S, {day: [S.week[fri ? 5 : w]]});   // per-weekday list [Sun..Sat], holiday = Friday
   var trip = o.trip === 'sunset' ? 'sunset' : 'day';
-  var opts = {day: !!(S.day), sunset: !!S.sunset, h24: !!(S.h24 && b.addons), addons: b.addons};
+  var opts = {day: !!(S.day), sunset: !!S.sunset, h24: !!(S.h24 && b.addons), addons: b.addons, marinaFee: o.boat !== 'morgana'};
   var next = function (s) { var t = new Date(s + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + 1); return t.toISOString().slice(0, 10); };
   if (!opts[trip]) return {ok: false, err: 'trip', season: season, opts: opts, cap: b.cap};
   var base = trip === 'sunset' ? S.sunset[fri || sat ? 1 : 0] : (S.day.length === 1 ? S.day[0] : S.day[idx]);
-  var add = {fishing: 2000, h24: S.h24 ? S.h24[idx] : 0, rod: 100, bait: 150};
+  var add = {fishing: 2000, h24: S.h24 ? S.h24[idx] : 0, rod: season === 'summer' ? 200 : 100, bait: season === 'summer' ? 200 : 150};
   var items = [{k: o.boat + '_' + trip, qty: 1, unit: base, amount: base}];
   var h24 = trip === 'day' && opts.h24 && !!o.h24;
   if (b.addons && trip === 'day' && o.fishing) items.push({k: 'fishing', qty: 1, unit: add.fishing, amount: add.fishing});
   if (h24) items.push({k: 'h24', qty: 1, unit: add.h24, amount: add.h24});
-  var dayAdd = b.addons && trip === 'day';
+  var dayAdd = trip === 'day';                 // rods & bait on every boat's day trip
   var rods = dayAdd ? Math.max(0, Math.min(10, parseInt(o.rods) || 0)) : 0, bait = dayAdd ? Math.max(0, Math.min(20, parseInt(o.bait) || 0)) : 0;
   if (rods) items.push({k: 'rod', qty: rods, unit: add.rod, amount: rods * add.rod});
   if (bait) items.push({k: 'bait', qty: bait, unit: add.bait, amount: bait * add.bait});

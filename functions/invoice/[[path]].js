@@ -6,14 +6,14 @@ const T = {
   ar: {dir: 'rtl', title: 'فاتورة حجز', status: {confirmed: 'مؤكد', cancelled: 'ملغي', pending: 'في انتظار العربون'}, no: 'رقم الحجز', billed: 'باسم', phone: 'موبايل', date: 'ميعاد الرحلة',
     desc: 'البيان', amount: 'المبلغ (جنيه)', total: 'إجمالي الحجز', paid: 'المدفوع (عربون)', due: 'الباقي يدفع عند الوصول', cur: 'جنيه',
     guests: 'عدد الأفراد', marina: 'مكان التحرك', captain: 'الريس', map: 'افتح اللوكيشن على الخريطة',
-    notes: 'مهم', n1: 'هاتوا معاكم البطايق أو الباسبورات أو شهادات الميلاد للأطفال (الأصل).', n2: 'ممنوع تمامًا اصطحاب أو تناول الكحوليات على اليخت.', n3: 'المارينا بتفتح الساعة 6 الصبح.',
+    notes: 'مهم', n1: 'هاتوا معاكم البطايق أو الباسبورات أو شهادات الميلاد للأطفال (الأصل).', n2: 'ممنوع تمامًا اصطحاب أو تناول الكحوليات على اليخت.', n3: 'المارينا بتفتح الساعة 6 الصبح.', n4: 'رسوم دخول مارينا وادي الدوم 40 جنيه، بتتدفع للمارينا مباشرة ومش ضمن سعر الرحلة.',
     thanks: 'شكرًا لاختياركم Morgana', see: 'مستنيينكم ونتمنالكم يوم جميل.', next: 'تاني يوم', pdf: 'حفظ PDF', img: 'حفظ كصورة / مشاركة',
     days: ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'], months: ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'],
     trip: {day: 'رحلة يوم كامل', night: 'رحلة مسائية', h24: 'رحلة 24 ساعة', sunset: 'رحلة الغروب', custom: 'رحلة'}, fish: 'صيد', outing: 'نزهة', on: 'على يخت'},
   en: {dir: 'ltr', title: 'Booking invoice', status: {confirmed: 'CONFIRMED', cancelled: 'CANCELLED', pending: 'AWAITING DEPOSIT'}, no: 'Booking no.', billed: 'Billed to', phone: 'Phone', date: 'Booking date',
     desc: 'Description', amount: 'Amount (EGP)', total: 'Total booking amount', paid: 'Payment received', due: 'Balance due on arrival', cur: 'EGP',
     guests: 'Guests', marina: 'Departure', captain: 'Captain', map: 'Open location in Google Maps',
-    notes: 'Important', n1: 'Please bring original national IDs or passports, and birth certificates for children.', n2: 'Alcohol is strictly not allowed on board.', n3: 'The marina opens at 6 AM.',
+    notes: 'Important', n1: 'Please bring original national IDs or passports, and birth certificates for children.', n2: 'Alcohol is strictly not allowed on board.', n3: 'The marina opens at 6 AM.', n4: 'Wadi El Dom marina entry fee is EGP 40, paid directly to the marina (not included in the trip price).',
     thanks: 'Thank you for choosing Morgana.', see: 'We look forward to welcoming you.', next: 'next day', pdf: 'Save PDF', img: 'Save image / share',
     days: ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'], months: ['January','February','March','April','May','June','July','August','September','October','November','December'],
     trip: {day: 'Full-day trip', night: 'Overnight trip', h24: '24-hour trip', sunset: 'Sunset trip', custom: 'Trip'}, fish: 'fishing', outing: 'outing', on: 'on'},
@@ -82,8 +82,8 @@ ${row('paid', money(b.paid))}
 <div class="two"><div>${lab('marina')}<div class="big">${esc(mar.en || '')}</div><div class="ar sub2">${esc(mar.ar || '')}</div>${mar.map ? `<a href="${esc(mar.map)}" target="_blank" rel="noopener" style="display:inline-block;margin-top:6px">${E.map}</a>` : ''}</div>
 ${cap ? `<div>${lab('captain')}<div class="big">${esc(cap.name)}</div><span dir="ltr">${loc(cap.phone)}</span></div>` : ''}</div>
 ${lab('notes').replace('<p class="lab"', '<p class="lab" style="margin-top:28px"')}
-<ul><li>${E.n1}</li><li>${E.n2}</li><li>${E.n3}</li></ul>
-<ul class="ar"><li>${A.n1}</li><li>${A.n2}</li><li>${A.n3}</li></ul>
+<ul><li>${E.n1}</li><li>${E.n2}</li><li>${E.n3}</li>${boat.marina === 'wadi' ? `<li>${E.n4}</li>` : ''}</ul>
+<ul class="ar"><li>${A.n1}</li><li>${A.n2}</li><li>${A.n3}</li>${boat.marina === 'wadi' ? `<li>${A.n4}</li>` : ''}</ul>
 <div class="end"><b>${E.thanks}</b><b class="ar sub2" style="font-size:17px;color:inherit">${A.thanks}</b><div class="sub">${E.see} · morganayacht.com</div><div class="sub ar sub2">${A.see}</div></div>
 </div></div>
 <div class="tools"><button onclick="print()">Save PDF · حفظ PDF</button><button id="shot">Save image / share · حفظ كصورة</button></div>

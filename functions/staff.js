@@ -98,7 +98,7 @@ function season(d){const m=+d.slice(5,7),dd=+d.slice(8,10);return (m>=4&&m<=9)||
 function suggest(b){ // returns [price, note] — Morgana price list; others are typed by hand
  if(b.boat!='morgana'){const BIG={portofino2:[8000,11000,14000],coquette:[10000,12000,15000]}[b.boat];if(!BIG)return [0,'السعر يتكتب بالإيد للمركب ده'];
   const dw=new Date(b.date+'T12:00').getDay(),i=(dw==5||b.holiday)?2:dw==6?1:0;
-  if(season(b.date)=='winter'&&b.trip=='day')return [BIG[i],'سعر الشتاء (6 – 4)'];if(season(b.date)=='summer'&&b.trip=='sunset')return [4000,'رحلة الساعتين صيف'];return [0,'السعر يتكتب بالإيد للرحلة دي']}
+  if(season(b.date)=='winter'&&b.trip=='day')return [BIG[i],'سعر الشتاء (6 – 4)'];if(season(b.date)=='summer'&&b.trip=='sunset')return [4000,'رحلة الساعتين صيف'];if(season(b.date)=='summer'&&b.trip=='day'){const W={portofino2:[11000,10000,10000,10000,11000,16500,12000],coquette:[12000,11000,11000,11000,12000,18000,14000]}[b.boat];return [W[(dw==5||b.holiday)?5:dw],'سعر الصيف (6 – 4)']}return [0,'السعر يتكتب بالإيد للرحلة دي']}
  const dw=new Date(b.date+'T12:00').getDay(),fri=dw==5||b.holiday,sat=dw==6,fish=b.kind=='fishing'?2000:0,s=season(b.date),t=b.trip;
  if(s=='winter'){if(t=='day')return[(fri?5500:sat?4500:3500)+fish,'سعر الشتاء'];if(t=='h24m'||t=='h24e')return[(fri?9000:sat?7000:6000)+fish,'سعر 24 ساعة شتاء'];}
  else{if(t=='day')return[(fri?12000:sat?8500:(dw==0||dw==4)?7000:6000)+fish,'سعر الصيف'];if(t=='sunset')return[(fri||sat)?2500:2000,'غروب صيف'];}
