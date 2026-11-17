@@ -49,7 +49,8 @@ export function parseDate(d) {
   return `${m[3]}-${z(mo)}-${z(+m[1])}T${z(h)}:${m[5]}`;
 }
 
-// Pure check (unit-testable). Returns {ok, reasons[], amount, reference, when}.
+// Pure check of ONE screenshot (unit-testable): is it a genuine-looking successful transfer to Morgana, made after
+// the booking was created, with a reference not used elsewhere? Amount rules are applied by the caller.
 export function checkReceipt(d, b, nowMs, usedRef) {
   const reasons = [];
   if (!d || d.error) return {ok: false, reasons: ['مقدرناش نقرا الصورة']};
@@ -57,18 +58,20 @@ export function checkReceipt(d, b, nowMs, usedRef) {
   if (d.status !== 'success' || /fail|declin|reject|pending|process|error|فشل|مرفوض|قيد/i.test(title) || !/success|نجاح|بنجاح/i.test(title))
     reasons.push('حالة التحويل مش «Transaction Successful»');
   const amount = Number(String(d.amount ?? '').replace(/[^\d.]/g, '')) || 0;
-  const need = b.deposit || Math.ceil(b.total / 2);
+  if (!amount) reasons.push('المبلغ مش واضح');
   if (String(d.currency || 'EGP').toUpperCase().indexOf('EGP') < 0) reasons.push('العملة مش جنيه');
-  if (amount < need) reasons.push(`المبلغ ${amount} أقل من العربون ${need}`);
-  if (amount > b.total) reasons.push(`المبلغ ${amount} أكبر من إجمالي الحجز`);
   const phone = String(d.to_phone || '').replace(/\D/g, '');
   if (!(phone.endsWith(PAYEE.phone) || PAYEE.name.test(String(d.to_name || '').trim()))) reasons.push('التحويل مش لحساب Morgana على انستاباي');
   const ref = String(d.reference || '').replace(/\D/g, '');
   if (ref.length < 8) reasons.push('رقم العملية (Reference) مش واضح');
-  else if (usedRef && usedRef !== b.id) reasons.push('رقم العملية ده اتستخدم قبل كده في حجز تاني');
+  else if (usedRef) reasons.push(usedRef === b.id ? 'صورة التحويل دي اترفعت قبل كده للحجز ده' : 'رقم العملية ده اتستخدم قبل كده في حجز تاني');
   const when = parseDate(d);
   const from = cairo(b.created - 10 * 60e3), to = cairo(nowMs + 10 * 60e3);
   if (!when) reasons.push('تاريخ التحويل مش واضح');
   else if (when < from || when > to) reasons.push(`تاريخ التحويل ${when.replace('T', ' ')} مش بعد وقت الحجز ${cairo(b.created).replace('T', ' ')}`);
   return {ok: reasons.length === 0, reasons, amount, reference: ref, when};
 }
+
+// Amount rule: the customer is asked for half; a booking is confirmed once the transfers add up to at least a quarter
+// of the total (internal minimum, never shown to the customer). Several transfers are added together.
+export const minPaid = b => Math.ceil(b.total / 4);

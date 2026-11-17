@@ -64,7 +64,7 @@ label{display:grid;gap:4px;font-size:.85rem;color:var(--mute)}label input,label 
 </form></dialog>
 
 <dialog id="dView"><div class="dlg"><h2 id="vt"></h2><div id="vinfo" class="hint"></div>
-<div class="pend" id="vpend" hidden><b>حجز من الموقع مستني تأكيد العربون</b><span id="vpinfo"></span><span id="vver" style="white-space:pre-line"></span><img id="vrc" alt="صورة التحويل" hidden><div class="g2"><input id="vpaid" inputmode="numeric" placeholder="المبلغ اللي وصل"><button class="pri" type="button" id="vconf">تأكيد استلام العربون</button></div></div>
+<div class="pend" id="vpend" hidden><b>حجز من الموقع مستني تأكيد العربون</b><span id="vpinfo"></span><span id="vver" style="white-space:pre-line"></span><div id="vrcs" style="display:flex;gap:8px;flex-wrap:wrap"></div><div class="g2"><input id="vpaid" inputmode="numeric" placeholder="المبلغ اللي وصل"><button class="pri" type="button" id="vconf">تأكيد استلام العربون</button></div></div>
 <div class="ifw"><iframe id="vinv" title="الفاتورة"></iframe></div>
 <div class="acts"><a id="wC" target="_blank"><button class="pri" type="button">1. ابعت الفاتورة للعميل</button></a><a id="wG" target="_blank"><button class="dark" type="button">2. ابعت لجروب ح مرجانه</button></a><a id="wK" target="_blank"><button type="button">ابعت للريس</button></a><a id="vopen" target="_blank"><button type="button">افتح الفاتورة (PDF / صورة)</button></a><button id="cp" type="button">نسخ اللينك</button></div><pre class="msg" id="vmsg" hidden></pre>
 
@@ -167,10 +167,11 @@ async function openView(id){let b=LIST.find(x=>x.id==id);if(!b)return;
  $('#wC').href=wa(b.phone,custMsg(b));$('#wG').href=wa('',conf(b)+'\n\n'+u);
  $('#wK').hidden=!cap||!cap.phone;if(cap)$('#wK').href=wa(cap.phone,conf(b));
  $('#vcx').textContent=b.status=='cancelled'?'رجّع الحجز':'إلغاء الحجز';$('#vdel').hidden=!ME.admin;$('#verr').textContent='';
- const pe=b.status=='pending';$('#vpend').hidden=!pe;$('#vrc').hidden=true;
+ const pe=b.status=='pending';$('#vpend').hidden=!pe;$('#vrcs').innerHTML='';
  if(pe){$('#vpaid').value=b.deposit||Math.ceil(b.total/2);$('#vpinfo').textContent='الإجمالي '+fmt(b.total)+' · العربون المطلوب '+fmt(b.deposit||Math.ceil(b.total/2))+(b.receipt?' · العميل رفع صورة التحويل':' · لسه ما رفعش صورة التحويل');
   $('#vver').textContent=b.verify?(b.verify.ok?'':'الفحص الأوتوماتيك لصورة التحويل ما عدّاش:\n• '+b.verify.reasons.join('\n• ')):'';
-  if(b.receipt)fetch('/api/receipt/'+b.id,{headers:{'x-key':KEY}}).then(r=>r.ok?r.blob():null).then(x=>{if(x){$('#vrc').src=URL.createObjectURL(x);$('#vrc').hidden=false}})}
+  if(b.receipt){const cnt=(b.payments||[]).length+1;for(let i=0;i<cnt;i++)fetch('/api/receipt/'+b.id+'?n='+i,{headers:{'x-key':KEY}}).then(r=>r.ok?r.blob():null).then(x=>{if(x){const im=new Image();im.src=URL.createObjectURL(x);im.style.maxHeight='300px';im.style.borderRadius='8px';$('#vrcs').append(im)}})}
+  if(b.payments&&b.payments.length)$('#vpinfo').textContent+=' · التحويلات: '+b.payments.map(p=>fmt(p.amount)+' (Ref '+p.ref+')').join(' + ')+' = '+fmt(b.paid);}
  dView.showModal()}
 $('#vconf').onclick=async()=>{const j=await api('/api/bookings/'+viewing.id,{action:'confirm',paid:$('#vpaid').value});if(j.error){$('#verr').textContent=j.error=='paid'?'اكتب المبلغ صح':j.error=='clash'?'اليوم محجوز لحد تاني':j.error;return}await load();openView(viewing.id)}
 $('#cp').onclick=()=>navigator.clipboard.writeText(invUrl(viewing)).then(()=>{$('#cp').textContent='اتنسخ ✓';setTimeout(()=>$('#cp').textContent='نسخ اللينك',1500)});
