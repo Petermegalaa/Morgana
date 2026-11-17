@@ -34,7 +34,7 @@ export async function onRequestPost({request, env, params}) {
   }
   if (body.action === 'delete') {
     if (!me.admin) return json({error: 'admin_only'}, 403);
-    await env.BOATS.delete(`bk:${date}:${old.id}`); await env.BOATS.delete('bi:' + old.id);
+    await env.BOATS.delete(`bk:${date}:${old.id}`); await env.BOATS.delete('bi:' + old.id); await env.BOATS.delete('rc:' + old.id);
     return json({ok: true});
   }
   if (body.action !== 'update') return json({error: 'action'}, 400);
