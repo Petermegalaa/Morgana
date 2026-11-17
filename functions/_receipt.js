@@ -8,7 +8,16 @@ status is "success" only if the receipt clearly says the transaction was success
 
 export async function readReceipt(env, buf) {
   if (!env.AI) return {error: 'no_ai'};
-  const run = () => env.AI.run(MODEL, {messages: [{role: 'user', content: PROMPT}], image: [...new Uint8Array(buf)], max_tokens: 300, temperature: 0});
+  const bytes = new Uint8Array(buf);
+  let b64 = ''; for (let i = 0; i < bytes.length; i += 32768) b64 += String.fromCharCode.apply(null, bytes.subarray(i, i + 32768));
+  const dataUrl = 'data:image/jpeg;base64,' + btoa(b64);
+  const run = async () => {
+    try { return await env.AI.run(MODEL, {prompt: PROMPT, image: [...bytes], max_tokens: 300, temperature: 0}); }
+    catch (e) {
+      if (/agree/i.test(String(e))) throw e;
+      return await env.AI.run(MODEL, {messages: [{role: 'user', content: [{type: 'text', text: PROMPT}, {type: 'image_url', image_url: {url: dataUrl}}]}], max_tokens: 300, temperature: 0});
+    }
+  };
   let r;
   try { r = await run(); }
   catch (e) {
