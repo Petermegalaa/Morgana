@@ -10,7 +10,7 @@ const T = {
     title: 'احجز رحلتك واحجز بالعربون | Morgana Yacht', h1: 'احجز يختك أونلاين',
     lead: 'اختار اليوم والإضافات، وشوف السعر على طول. بتدفع نص المبلغ عربون، والباقي يوم الرحلة.',
     s0: 'اختار اليخت', boats: {morgana: ['Morgana', 'لحد 10 أفراد · صيد وإضافات'], portofino2: ['Portofino 2', 'لحد 25 فرد'], coquette: ['Coquette', 'لحد 30 فرد']},
-    tday: 'يوم كامل', tsun: 'رحلة الغروب 4 – 6 (صيف)', hol: 'اليوم ده إجازة رسمية، بيتحسب بسعر الجمعة', gmax: 'أقصى عدد على المركب ده {n} فرد', mfee: 'ℹ️ رسوم دخول مارينا وادي الدوم 40 جنيه، بتتدفع للمارينا مباشرة ومش ضمن سعر الرحلة.', from: 'من', to: 'لـ', nextd: 'تاني يوم', noday: 'اليوم الكامل لليخت ده في الصيف بيتحجز على واتساب',
+    tday: 'يوم كامل', tsun: 'رحلة الغروب 4 – 6 (صيف)', hol: 'اليوم ده إجازة رسمية، بيتحسب بسعر الجمعة', gmax: 'أقصى عدد على المركب ده {n} فرد', mfee: '<b>مش شامل سعر الرحلة (Portofino 2 وCoquette):</b><ul><li>رسوم دخول مارينا وادي الدوم 40 جنيه للفرد، بتتدفع للمارينا مباشرة <span class="mf"></span></li><li>إيجار الشواية 250 جنيه</li><li>سيرفيس الشيف والطاقم لتسوية الأكل 1,000 جنيه</li></ul>', mfx: '(لـ {g} فرد = {t} جنيه)', from: 'من', to: 'لـ', nextd: 'تاني يوم', noday: 'اليوم الكامل لليخت ده في الصيف بيتحجز على واتساب',
     s1: 'ميعاد الرحلة', date: 'اليوم', guests: 'عدد الأفراد', time: 'يوم كامل من 6 الصبح لـ 5 العصر', time24: '24 ساعة: من 6 الصبح لـ 6 الصبح تاني يوم',
     s2: 'الإضافات', fishing: 'رحلة صيد', h24: 'خلّيها 24 ساعة', rod: 'سنارة', bait: 'طبق طعم (نص كيلو جمبري)', each: 'للواحدة', plate: 'للطبق',
     s3: 'بياناتك', name: 'الاسم', phone: 'رقم الموبايل (واتساب)', phone2: 'رقم تاني (اختياري)', note: 'ملاحظات (اختياري)',
@@ -27,7 +27,7 @@ const T = {
     title: 'Book online & pay deposit | Morgana Yacht', h1: 'Book your yacht online',
     lead: 'Pick your day and add-ons and see the price instantly. Pay half as a deposit, the rest on the day.',
     s0: 'Choose your yacht', boats: {morgana: ['Morgana', 'Up to 10 guests · fishing & add-ons'], portofino2: ['Portofino 2', 'Up to 25 guests'], coquette: ['Coquette', 'Up to 30 guests']},
-    tday: 'Full day', tsun: 'Sunset trip 4 – 6 PM (summer)', hol: 'Public holiday: priced as Friday', gmax: 'Maximum {n} guests on this yacht', mfee: 'ℹ️ Wadi El Dom marina entry fee is EGP 40, paid directly to the marina (not included in the trip price).', from: 'From', to: 'to', nextd: 'next day', noday: 'Summer full days on this yacht are booked on WhatsApp',
+    tday: 'Full day', tsun: 'Sunset trip 4 – 6 PM (summer)', hol: 'Public holiday: priced as Friday', gmax: 'Maximum {n} guests on this yacht', mfee: '<b>Not included in the trip price (Portofino 2 & Coquette):</b><ul><li>Wadi El Dom marina entry fee EGP 40 per person, paid directly to the marina <span class="mf"></span></li><li>Grill rental EGP 250</li><li>Chef & crew service for cooking your food EGP 1,000</li></ul>', mfx: '({g} guests = EGP {t})', from: 'From', to: 'to', nextd: 'next day', noday: 'Summer full days on this yacht are booked on WhatsApp',
     s1: 'Trip date', date: 'Date', guests: 'Guests', time: 'Full day, 6 AM – 5 PM', time24: '24 hours: 6 AM – 6 AM next day',
     s2: 'Add-ons', fishing: 'Fishing trip', h24: 'Make it 24 hours', rod: 'Fishing rod', bait: 'Bait plate (½ kg shrimp)', each: 'each', plate: 'per plate',
     s3: 'Your details', name: 'Name', phone: 'Mobile (WhatsApp)', phone2: 'Second number (optional)', note: 'Notes (optional)',
@@ -53,7 +53,7 @@ export async function bookPage(request, env, L) {
 <fieldset><legend>${t.s0}</legend><div class="boats">${Object.entries(t.boats).map(([k, v], i) => `<label class="bt"><input type="radio" name="boat" value="${k}"${i ? '' : ' checked'}><img src="${encodeURI(BOAT_IMG[k][0])}" alt="${BOAT_IMG[k][1]}" width="640" height="400" loading="${i ? 'lazy' : 'eager'}"><b>${v[0]}</b><small>${v[1]}</small></label>`).join('')}</div></fieldset>
 <fieldset><legend>${t.s1}</legend>
 <div class="r2"><label>${t.date}<input type="date" name="date" id="bdate" required></label><label>${t.guests}<input type="number" name="guests" min="1" max="10" value="2" inputmode="numeric" id="bguests"><span class="gmax" id="gmax" hidden></span></label></div>
-<div class="trips"><label id="w_day"><input type="radio" name="trip" value="day" checked> ${t.tday}</label><label id="w_sun"><input type="radio" name="trip" value="sunset"> ${t.tsun}</label></div><p class="mini" id="noday" hidden>${t.noday}</p><p class="av" id="av">${t.pick}</p><p class="mini" id="hol" hidden>${t.hol}</p><p class="mfee" id="mfee" hidden>${t.mfee}</p><p class="mini" id="btime">${t.time}</p></fieldset>
+<div class="trips"><label id="w_day"><input type="radio" name="trip" value="day" checked> ${t.tday}</label><label id="w_sun"><input type="radio" name="trip" value="sunset"> ${t.tsun}</label></div><p class="mini" id="noday" hidden>${t.noday}</p><p class="av" id="av">${t.pick}</p><p class="mini" id="hol" hidden>${t.hol}</p><div class="mfee" id="mfee" hidden>${t.mfee}</div><p class="mini" id="btime">${t.time}</p></fieldset>
 <fieldset id="addf"><legend>${t.s2}</legend>
 <label class="add" id="w_fish"><input type="checkbox" name="fishing"><span>${t.fishing}</span><b id="p_fish">+2,000</b></label>
 <label class="add" id="w_24"><input type="checkbox" name="h24"><span>${t.h24}</span><b id="p_24"></b></label>
@@ -89,7 +89,7 @@ export async function bookPage(request, env, L) {
 .qty{display:flex;align-items:center;gap:6px}.qty button{width:36px;height:36px;border-radius:50%;border:1px solid color-mix(in srgb,var(--mute) 40%,transparent);background:var(--salt);color:var(--ink);font-size:1.2rem;cursor:pointer}.qty output{min-width:24px;text-align:center;font-weight:700}
 .boats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.bt{position:relative;border:2px solid color-mix(in srgb,var(--mute) 30%,transparent);border-radius:16px;padding:0 0 12px!important;overflow:hidden;gap:4px!important;cursor:pointer;color:var(--ink)!important}.bt input{position:absolute;opacity:0}.bk .bt img{width:100%!important;height:150px!important;max-height:none;aspect-ratio:auto;object-fit:cover;display:block;margin-bottom:6px}.bt b,.bt small{padding:0 12px}.bt b{font-size:1.15rem}.bt small{color:var(--mute)}.gmax{color:var(--coral);font-weight:700;margin:4px 0 0}.bt:has(input:checked){border-color:var(--coral);background:color-mix(in srgb,var(--coral) 8%,transparent)}
 .trips{display:flex;gap:16px;flex-wrap:wrap;margin:4px 0}.trips label{white-space:nowrap;display:flex!important;align-items:center;gap:6px;color:var(--ink)!important;font-size:1rem!important}.trips input{accent-color:var(--coral);width:18px;height:18px}
-.mfee{background:color-mix(in srgb,var(--sun) 18%,transparent);border-radius:12px;padding:10px 12px;margin:8px 0 0;font-size:.92rem}.av{font-weight:700;margin:6px 0 0}.av.ok{color:#1f8a5b}.av.no{color:var(--coral)}
+.mfee{background:color-mix(in srgb,var(--sun) 18%,transparent);border-radius:12px;padding:10px 12px;margin:8px 0 0;font-size:.92rem}.mfee ul{margin:6px 0 0;padding-inline-start:20px;line-height:1.8}.av{font-weight:700;margin:6px 0 0}.av.ok{color:#1f8a5b}.av.no{color:var(--coral)}
 .sum{position:sticky;top:90px;background:var(--shell);border-radius:20px;padding:20px}.sum h2{margin:0 0 10px;font-size:1.4rem}
 .sum .ln{display:flex;justify-content:space-between;gap:10px;padding:6px 0;font-size:.95rem}.sum .ln small{color:var(--mute)}
 .sum .tot,.sum .dep,.sum .rest{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid color-mix(in srgb,var(--mute) 25%,transparent)}
@@ -99,7 +99,7 @@ export async function bookPage(request, env, L) {
 @media(max-width:860px){.boats{grid-template-columns:1fr}.bk-grid{grid-template-columns:1fr}.sum{position:static}.r2{grid-template-columns:1fr}}
 </style>
 <script>(function(){
-var L=${JSON.stringify(L)},T=${JSON.stringify({errs: t.errs, free: t.free, busy: t.busy, pick: t.pick, cur: t.cur, upd: t.upd, gmax: t.gmax, from: t.from, to: t.to, nextd: t.nextd})},LAB=${JSON.stringify(labels)},WA=${JSON.stringify(WA)};
+var L=${JSON.stringify(L)},T=${JSON.stringify({errs: t.errs, free: t.free, busy: t.busy, pick: t.pick, cur: t.cur, upd: t.upd, gmax: t.gmax, mfx: t.mfx, from: t.from, to: t.to, nextd: t.nextd})},LAB=${JSON.stringify(labels)},WA=${JSON.stringify(WA)};
 var __name=function(f){return f},__name2=__name;   // bundler keep-names helper used inside quote()
 var quote=${quote.toString()};
 var f=document.getElementById('bf'),q={rods:0,bait:0},busy=[],busyKey='',t0=Date.now(),taken=false,HOL=[];
@@ -118,7 +118,7 @@ function opts(){var s=state(),d=s.date||add(ymd(new Date()),1),r=quote(Object.as
  var day=f.trip.value==='day';$('addf').hidden=!day;$('w_fish').hidden=!(o.addons&&day);$('mfee').hidden=!o.marinaFee;$('w_24').hidden=!(o.h24&&day);if(!(o.h24&&day))f.h24.checked=false;if(!day)f.fishing.checked=false;
  if(r.add){$('p_24').textContent='+'+Number(r.add.h24).toLocaleString('en-US');document.querySelector('.p_rod').textContent=r.add.rod;document.querySelector('.p_bait').textContent=r.add.bait}
  if(r.cap){$('bguests').max=r.cap;CAP=r.cap}guestsChk()}
-var CAP=10;function guestsChk(){var g=+f.guests.value,over=g>CAP;$('gmax').hidden=!over;$('gmax').textContent=T.gmax.replace('{n}',CAP);$('bguests').setAttribute('aria-invalid',over);return !over}
+var CAP=10;function guestsChk(){var g=+f.guests.value,over=g>CAP;var mf=document.querySelector('.mf');if(mf)mf.textContent=g>0&&!over?T.mfx.replace('{g}',g).replace('{t}',(g*40).toLocaleString('en-US')):'';$('gmax').hidden=!over;$('gmax').textContent=T.gmax.replace('{n}',CAP);$('bguests').setAttribute('aria-invalid',over);return !over}
 async function avail(){opts();var s=state(),av=$('av');taken=false;$('hol').hidden=!s.holiday;if(!s.date){av.textContent=T.pick;av.className='av';calc();return}
  var r=quote(s);if(!r.ok){av.textContent='';calc();return}
  var key=s.boat+s.date.slice(0,7);if(key!==busyKey){try{var j=await (await fetch('/api/availability?boat='+s.boat+'&from='+s.date.slice(0,7)+'-01&to='+add(s.date.slice(0,7)+'-28',5))).json();busy=j.busy||[];busyKey=key}catch(e){busy=[]}}
