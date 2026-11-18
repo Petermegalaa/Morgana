@@ -9,6 +9,7 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: 0d05fe281c7244816fae3908aff78f8f
+      KASHIER_API_KEY: ${{ secrets.KASHIER_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -19,5 +20,6 @@ jobs:
           test -n "$ID" || { echo "KV namespace not found"; exit 1; }
           printf 'name = "morgana-yacht"\npages_build_output_dir = "site"\ncompatibility_date = "2026-11-01"\n\n[[kv_namespaces]]\nbinding = "BOATS"\nid = "%s"\n\n[ai]\nbinding = "AI"\n' "$ID" > wrangler.toml
           cat wrangler.toml
+          if [ -n "$KASHIER_API_KEY" ]; then printf '\n[vars]\nKASHIER_MID = "MID-54523-986"\nKASHIER_MODE = "test"\nKASHIER_API_KEY = "%s"\n' "$KASHIER_API_KEY" >> wrangler.toml; echo "Kashier test key added"; else echo "No Kashier key yet"; fi
       - name: Deploy to the test branch (preview URL, not the live domain)
         run: npx -y wrangler@3 pages deploy --branch=test --commit-dirty=true
