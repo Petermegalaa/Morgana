@@ -93,12 +93,18 @@ const ymd=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+Stri
 const addD=(s,n)=>{const d=new Date(s+'T12:00');d.setDate(d.getDate()+n);return ymd(d)};
 const loc=p=>p&&p.startsWith('20')&&p.length==12?'0'+p.slice(2):(p?'+'+p:'');
 const boat=id=>CFG.boats.find(b=>b.id==id)||{name:id,marina:'portrait'};
-async function api(path,body){const r=await fetch(path,{method:body?'POST':'GET',headers:{'x-key':KEY,'content-type':'application/json'},body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({error:'net'}));if(r.status==401){logout();throw 0}return j}
+async function api(path,body){const r=await fetch(path,{method:body?'POST':'GET',headers:{'x-key':KEY,'content-type':'application/json'},body:body?JSON.stringify(body):undefined});const j=await r.json().catch(()=>({error:'net'}));if(r.status==401){logout();throw 0}
+ if(body&&j.ok&&/^\/api\/bookings/.test(path)){if(j.booking)remember(j.booking.id,j.booking);else if(body.action==='delete')remember(path.split('/').pop(),null)}return j}
 function logout(){KEY='';try{localStorage.removeItem('mk')}catch(e){}$('#app').hidden=true;$('#login').hidden=false}
 $('#kgo').onclick=async()=>{KEY=$('#k').value.trim();$('#kerr').textContent='';try{await load();try{localStorage.setItem('mk',KEY)}catch(e){}}catch(e){$('#kerr').textContent='المفتاح مش صح'}};
 $('#out').onclick=logout;
+// KV takes up to a minute to show new writes everywhere: keep our own recent changes and lay them over what the server returns.
+let RECENT={};try{RECENT=JSON.parse(sessionStorage.getItem('rc')||'{}')}catch(e){}
+function remember(id,b){RECENT[id]={b,t:Date.now()};try{sessionStorage.setItem('rc',JSON.stringify(RECENT))}catch(e){}}
+function applyRecent(list){const now=Date.now(),m=new Map(list.map(x=>[x.id,x]));for(const[id,r]of Object.entries(RECENT)){if(now-r.t>120000){delete RECENT[id];continue}if(r.b)m.set(id,r.b);else m.delete(id)}return[...m.values()].sort((a,b)=>a.start.localeCompare(b.start))}
+function goTo(b){if(b&&b.boat)BOAT=b.boat;if(b&&b.date){const d=new Date(b.date+'T12:00');cur=new Date(d.getFullYear(),d.getMonth(),1)}}
 async function load(){const a=new Date(cur.getFullYear(),cur.getMonth(),1),from=addD(ymd(a),-7),to=addD(ymd(new Date(cur.getFullYear(),cur.getMonth()+1,0)),45);
- const j=await api('/api/bookings?from='+from+'&to='+to);ME=j.me;CFG=j.cfg;LIST=j.list;$('#login').hidden=true;$('#app').hidden=false;$('#me').textContent=ME.name;$('#set').hidden=!ME.admin;
+ const j=await api('/api/bookings?from='+from+'&to='+to);ME=j.me;CFG=j.cfg;LIST=applyRecent(j.list);$('#login').hidden=true;$('#app').hidden=false;$('#me').textContent=ME.name;$('#set').hidden=!ME.admin;
  if(!CFG.boats.some(b=>b.id==BOAT))BOAT=CFG.boats[0].id;render()}
 function season(d){const m=+d.slice(5,7),dd=+d.slice(8,10);return (m>=4&&m<=9)||(m==10&&dd<=15)?'summer':'winter'}
 function suggest(b){ // returns [price, note] — Morgana price list; others are typed by hand
@@ -142,7 +148,7 @@ async function save(force){const b=formData();$('#ferr').textContent='';$('#fsav
  const j=editing?await api('/api/bookings/'+editing.id,{...b,action:'update',force}):await api('/api/bookings',{...b,force});$('#fsave').disabled=false;
  if(j.error=='clash'){if(confirm('المركب ده محجوز في نفس الوقت ('+j.with.name+' '+j.with.start.replace('T',' ')+'). تسجل الحجز برضو؟'))return save(true);return}
  if(j.error){$('#ferr').textContent='راجع: '+(j.fields||[j.error]).map(x=>({boat:'المركب',time:'المواعيد',name:'الاسم',phone:'الموبايل',total:'السعر',paid:'العربون أكبر من السعر'}[x]||x)).join('، ');return}
- dEdit.close();await load();openView(j.booking.id)}
+ dEdit.close();goTo(j.booking);await load();openView(j.booking.id)}
 // ---- paste a WhatsApp confirmation
 // Reads a Morgana booking-confirmation message (Arabic or English, as staff write it on WhatsApp).
 function parseConfirm(raw){
@@ -189,14 +195,14 @@ $('#pgo').onclick=async()=>{const msgs=splitMsgs($('#ptxt').value);if(!msgs.leng
   for(const k of['boat','trip','kind','name','total','paid','lang'])if(F[k]&&o[k]!==undefined&&o[k]!=='')F[k].value=o[k];
   F.phone.value=o.phone||'';F.phone2.value=o.phone2||'';F.source.value='واتساب';F.note.value=o.note||'';$('#ft1').value=o.t1;$('#ft2').value=o.t2;
   $('#fhint').textContent='اتملت من رسالة الواتساب — راجعها ودوس حفظ';$('#ft').textContent='حجز من رسالة واتساب';return}
- let ok=0,res=[];$('#pgo').disabled=true;
+ let ok=0,res=[],last=null;$('#pgo').disabled=true;
  for(const m of msgs){const o=parseConfirm(m),b=toBooking(o);
   if(!b.name||!b.phone||!b.total){res.push('⚠️ '+(o.date||'?')+' '+(b.name||'')+': ناقص اسم أو موبايل أو سعر — اتسابت');continue}
   const j=await api('/api/bookings',b);
-  if(j.ok){ok++;res.push('✓ '+o.date+' '+boat(b.boat).name+' — '+b.name)}
+  if(j.ok){ok++;last=j.booking;res.push('✓ '+o.date+' '+boat(b.boat).name+' — '+b.name)}
   else if(j.error==='clash')res.push('↩︎ '+o.date+' '+b.name+': متسجلة قبل كده أو اليوم محجوز ('+j.with.name+')');
   else res.push('⚠️ '+o.date+' '+b.name+': '+(j.fields||[j.error]).join(','))}
- $('#pgo').disabled=false;$('#pres').textContent='اتسجل '+ok+' من '+msgs.length+'\n'+res.join('\n');await load()};
+ $('#pgo').disabled=false;$('#pres').textContent='اتسجل '+ok+' من '+msgs.length+'\n'+res.join('\n');if(last)goTo(last);await load()};
 // ---- messages
 function hl(t,lang){let h=+t.slice(0,2),mi=t.slice(3);const mm=mi=='00'?'':':'+mi;
  if(lang=='en'){const ap=h<12?'am':'pm';return ((h%12)||12)+mm+ap}
