@@ -38,7 +38,7 @@ label{display:grid;gap:4px;font-size:.85rem;color:var(--mute)}label input,label 
 <main>
 <div class="tabs" id="tabs"></div>
 <div class="bar"><button id="prev">‹</button><b id="mon"></b><button id="next">›</button><button id="tod">النهارده</button>
-<span style="flex:1"></span><button class="pri" id="add">+ حجز جديد</button></div>
+<span style="flex:1"></span><button class="dark" id="paste">📋 الصق رسالة التأكيد</button><button class="pri" id="add">+ حجز جديد</button></div>
 <div class="cal" id="cal"></div>
 <h3 style="margin:18px 0 0">الحجوزات الجاية</h3><div class="list" id="up"></div>
 </main></div>
@@ -71,6 +71,11 @@ label{display:grid;gap:4px;font-size:.85rem;color:var(--mute)}label input,label 
 <div class="acts"><button id="ved" type="button">تعديل</button><button id="vcx" type="button">إلغاء الحجز</button><button id="vdel" type="button" hidden>مسح نهائي</button><span style="flex:1"></span><button type="button" onclick="dView.close()">قفل</button></div>
 <p class="err" id="verr"></p></div></dialog>
 
+<dialog id="dPaste"><div class="dlg"><h2>الصق رسالة تأكيد الحجز</h2>
+<p class="hint">انسخ رسالة «تأكيد الحجز» من الواتساب (أو من الجروب) والزقها هنا. ممكن تلزق كذا رسالة مع بعض.</p>
+<textarea id="ptxt" rows="10" style="font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px;width:100%"></textarea>
+<div class="acts"><button class="pri" type="button" id="pgo">اقرا الرسالة</button><button type="button" onclick="dPaste.close()">قفل</button></div>
+<div id="pres" class="hint" style="white-space:pre-line"></div></div></dialog>
 <dialog id="dSet"><div class="dlg"><h2>الإعدادات</h2>
 <b>الريّسين</b><div id="caps"></div><button type="button" id="capAdd">+ ريس</button><button class="dark" type="button" id="capSave">حفظ الريّسين</button>
 <b>لوكيشن مارينا وادي الدوم</b><label>لينك جوجل مابس<input id="wadiMap" placeholder="https://maps.app.goo.gl/..."></label><button class="dark" type="button" id="mapSave">حفظ اللوكيشن</button>
@@ -138,6 +143,58 @@ async function save(force){const b=formData();$('#ferr').textContent='';$('#fsav
  if(j.error=='clash'){if(confirm('المركب ده محجوز في نفس الوقت ('+j.with.name+' '+j.with.start.replace('T',' ')+'). تسجل الحجز برضو؟'))return save(true);return}
  if(j.error){$('#ferr').textContent='راجع: '+(j.fields||[j.error]).map(x=>({boat:'المركب',time:'المواعيد',name:'الاسم',phone:'الموبايل',total:'السعر',paid:'العربون أكبر من السعر'}[x]||x)).join('، ');return}
  dEdit.close();await load();openView(j.booking.id)}
+// ---- paste a WhatsApp confirmation
+// Reads a Morgana booking-confirmation message (Arabic or English, as staff write it on WhatsApp).
+function parseConfirm(raw){
+  var t=String(raw||'').replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d)}).replace(/[۰-۹]/g,function(d){return '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)}).replace(/‏|‎|‪|‬|\*/g,'');
+  var o={},low=t.toLowerCase();
+  var dm=t.match(/(\d{1,2})\s*[\/\-.]\s*(\d{1,2})\s*[\/\-.]\s*(\d{2,4})/);
+  if(dm){var y=+dm[3];if(y<100)y+=2000;o.date=y+'-'+String(dm[2]).padStart(2,'0')+'-'+String(dm[1]).padStart(2,'0')}
+  var num=function(s){return Number(String(s).replace(/[^\d]/g,''))||0};
+  var pm=t.match(/بدفع\s*مبلغ\s*([\d,.]+)[\s\S]*?(?:من\s*)?اصل\s*([\d,.]+)/)||t.match(/paying\s*([\d,.]+)[\s\S]*?out\s*of\s*([\d,.]+)/i);
+  if(pm){o.paid=num(pm[1]);o.total=num(pm[2])}
+  o.kind=/صيد|fishing/i.test(t)?'fishing':'outing';
+  var h24=/24\s*(ساع|hour)/i.test(t);
+  var tm=t.match(/من\s*(\d{1,2})(?::(\d{2}))?\s*(ص|م|صباح\S*|مساء\S*|am|pm)?\s*(?:الي|إلى|الى|ل|لـ|-)\s*(\d{1,2})(?::(\d{2}))?\s*(ص|م|صباح\S*|مساء\S*|am|pm)?/i)||t.match(/from\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\s*(?:to|-)\s*(\d{1,2})(?::(\d{2}))?\s*(am|pm)?/i);
+  var s=6,e=17;
+  if(tm){s=+tm[1];e=+tm[4];var sa=(tm[3]||'').toLowerCase(),ea=(tm[6]||'').toLowerCase();
+    if(/^pm|^مساء/.test(sa)&&s<12)s+=12; if(/^pm|^مساء/.test(ea)&&e<12)e+=12;
+    if(!/^(am|pm|صباح|مساء)/.test(sa)){ if(s<=5)s+=12; }          // "م" is written for any time: 1–5 → afternoon, 6–11 → morning
+    if(!/^(am|pm|صباح|مساء)/.test(ea)){ if(e<=7&&!(h24&&e===s-12))e+=12; }
+    if(h24){e=s}}
+  else if(h24){s=6;e=6}
+  var pad=function(n){return String(n).padStart(2,'0')};
+  o.t1=pad(s%24)+':'+(tm&&tm[2]?tm[2]:'00'); o.t2=pad(e%24)+':'+(tm&&tm[5]?tm[5]:'00');
+  o.trip=h24?'custom':(s>=15?'custom':'day'); if(h24&&s===6)o.trip='h24m'; if(h24&&s===17)o.trip='h24e'; if(!h24&&s===6&&e===17)o.trip='day';
+  if(!h24&&s===17&&e===6)o.trip='night5'; if(!h24&&s===16&&e===18)o.trip='sunset';
+  o.boat=/portofino|بورتوفينو/i.test(t)?'portofino2':/coquette|كوكيت|كوكات/i.test(t)?'coquette':'morgana';
+  var lines=t.split(/\n+/).map(function(l){return l.trim()}).filter(Boolean);
+  var phones=[];lines.forEach(function(l){var d=l.replace(/^(mobile|موبايل|رقم)\s*:?\s*/i,'');if(/^\+?[\d\s\-]{10,16}$/.test(d))phones.push(d.replace(/[\s\-]/g,''))});
+  o.phone=phones[0]||'';o.phone2=phones[1]||'';
+  var nm=t.match(/name\s*:\s*(.+)/i);
+  if(nm)o.name=nm[1].trim();
+  else{var idx=lines.findIndex(function(l){return /^(morgana|portofino|coquette)/i.test(l)});
+    if(idx>=0)for(var k=idx+1;k<lines.length;k++){if(!/\d{6,}/.test(lines[k])){o.name=lines[k];break}}}
+  o.lang=/[a-z]{4}/i.test(t)&&/reservation/i.test(t)?'en':'ar';
+  return o;
+}
+
+$('#paste').onclick=()=>{$('#ptxt').value='';$('#pres').textContent='';dPaste.showModal();setTimeout(()=>$('#ptxt').focus(),50)};
+function splitMsgs(t){return t.split(/(?=رسال[هة]\s*تا?[أا]?كيد\s*الحجز|reservation\s*confirmation)/i).map(x=>x.trim()).filter(x=>/\d{1,2}\s*[\/\-.]\s*\d{1,2}\s*[\/\-.]\s*\d{2,4}/.test(x.replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d))))}
+function toBooking(o){const p=PRESET[o.trip];const next=p?p[2]:(o.t2<=o.t1?1:0);return {boat:o.boat,trip:o.trip,kind:o.kind,date:o.date,start:o.date+'T'+o.t1,end:addD(o.date,next)+'T'+o.t2,name:o.name||'',phone:o.phone||'',phone2:o.phone2||'',total:o.total||0,paid:o.paid||0,lang:o.lang,source:'واتساب',guests:'',captain:'',holiday:false,note:''}}
+$('#pgo').onclick=async()=>{const msgs=splitMsgs($('#ptxt').value);if(!msgs.length){$('#pres').textContent='مش لاقي تاريخ في الرسالة. اتأكد إنك لزقت رسالة تأكيد الحجز كاملة.';return}
+ if(msgs.length===1){const o=parseConfirm(msgs[0]);dPaste.close();openEdit(null,o.date);autoPrice=false;
+  for(const k of['boat','trip','kind','name','total','paid','lang'])if(F[k]&&o[k]!==undefined&&o[k]!=='')F[k].value=o[k];
+  F.phone.value=o.phone||'';F.phone2.value=o.phone2||'';F.source.value='واتساب';$('#ft1').value=o.t1;$('#ft2').value=o.t2;
+  $('#fhint').textContent='اتملت من رسالة الواتساب — راجعها ودوس حفظ';$('#ft').textContent='حجز من رسالة واتساب';return}
+ let ok=0,res=[];$('#pgo').disabled=true;
+ for(const m of msgs){const o=parseConfirm(m),b=toBooking(o);
+  if(!b.name||!b.phone||!b.total){res.push('⚠️ '+(o.date||'?')+' '+(b.name||'')+': ناقص اسم أو موبايل أو سعر — اتسابت');continue}
+  const j=await api('/api/bookings',b);
+  if(j.ok){ok++;res.push('✓ '+o.date+' '+boat(b.boat).name+' — '+b.name)}
+  else if(j.error==='clash')res.push('↩︎ '+o.date+' '+b.name+': متسجلة قبل كده أو اليوم محجوز ('+j.with.name+')');
+  else res.push('⚠️ '+o.date+' '+b.name+': '+(j.fields||[j.error]).join(','))}
+ $('#pgo').disabled=false;$('#pres').textContent='اتسجل '+ok+' من '+msgs.length+'\n'+res.join('\n');await load()};
 // ---- messages
 function hl(t,lang){let h=+t.slice(0,2),mi=t.slice(3);const mm=mi=='00'?'':':'+mi;
  if(lang=='en'){const ap=h<12?'am':'pm';return ((h%12)||12)+mm+ap}
